@@ -10,7 +10,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _nama = '', _email = '';
+  String _nama = '', _email = '', _role = 'user';
 
   @override
   void initState() {
@@ -20,7 +20,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _load() async {
     final info = await StorageHelper.getUserInfo();
-    setState(() { _nama = info['nama'] ?? ''; });
+    setState(() {
+      _nama = info['nama'] ?? '';
+      _role = info['role'] ?? 'user';
+    });
   }
 
   Future<void> _logout() async {
@@ -43,8 +46,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             Text(_nama,
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             ListTile(
               leading: const Icon(Icons.history),
@@ -52,7 +55,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () {},
             ),
-            const Divider(),
+            if (_role == 'admin') ...[
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings,
+                    color: AppColors.primary),
+                title: const Text('Admin Panel'),
+                subtitle: const Text('Kelola Pipeline & Data'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/admin'),
+              ),
+              const Divider(),
+            ],
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Pengaturan Akun'),
@@ -62,8 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout',
-                  style: TextStyle(color: Colors.red)),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
               onTap: _logout,
             ),
           ],

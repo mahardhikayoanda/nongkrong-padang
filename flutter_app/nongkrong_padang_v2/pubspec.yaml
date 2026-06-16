@@ -1,10 +1,10 @@
 name: nongkrong_padang
 description: Sistem Rekomendasi Tempat Nongkrong Kota Padang
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.5 <4.0.0'
+  sdk: ">=3.0.5 <4.0.0"
 
 dependencies:
   flutter:

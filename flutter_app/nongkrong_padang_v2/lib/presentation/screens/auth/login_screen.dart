@@ -13,10 +13,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailCtrl    = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  bool _isLoading     = false;
-  bool _obscurePass   = true;
+  bool _isLoading = false;
+  bool _obscurePass = true;
 
   Future<void> _login() async {
     if (_emailCtrl.text.isEmpty || _passwordCtrl.text.isEmpty) {
@@ -30,37 +30,37 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await DioClient.instance.post(
         '/auth/login',
         data: {
-          'email':    _emailCtrl.text.trim(),
+          'email': _emailCtrl.text.trim(),
           'password': _passwordCtrl.text,
         },
       );
 
-      final data  = response.data;
+      final data = response.data;
       final token = data['access_token'];
-      final user  = data['user'];
+      final user = data['user'];
 
       await StorageHelper.saveToken(token);
       await StorageHelper.saveUserInfo(
-        id:   user['id_user'],
+        id: user['id_user'],
         nama: user['nama'],
         role: user['role'],
       );
 
       if (mounted) {
-        user['role'] == 'admin'
-            ? context.go('/admin')
-            : context.go('/home');
+        user['role'] == 'admin' ? context.go('/admin') : context.go('/home');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data['detail'] ?? 'Login gagal';
+      final status = e.response?.statusCode;
+      final detail = e.response?.data?['detail'];
+      final msg = "Login Gagal ($status): ${detail ?? e.message}";
       _showSnack(msg);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showSnack(String msg) => ScaffoldMessenger.of(context)
-      .showSnackBar(SnackBar(content: Text(msg)));
+  void _showSnack(String msg) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +69,8 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24)
-            ),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             elevation: 4,
             child: Padding(
               padding: const EdgeInsets.all(28),
@@ -141,6 +140,24 @@ class _LoginScreenState extends State<LoginScreen> {
                           icon: const Icon(Icons.arrow_forward),
                           label: const Text('Masuk'),
                         ),
+                  const SizedBox(height: 16),
+
+                  // Tombol Khusus Admin (Dev Mode)
+                  if (true) // Selalu tampilkan di dev mode
+                    TextButton.icon(
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              _emailCtrl.text = 'mahardhikayoanda07@gmail.com';
+                              _passwordCtrl.text = 'admin123';
+                              _login();
+                            },
+                      icon: const Icon(Icons.developer_mode, size: 16),
+                      label: const Text('Developer Login (Admin)',
+                          style: TextStyle(fontSize: 12)),
+                      style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                    ),
+
                   const SizedBox(height: 16),
 
                   const Divider(),
