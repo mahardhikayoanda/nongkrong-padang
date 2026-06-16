@@ -1,0 +1,82 @@
+[
+  {
+    "teks": "tempatnya nyaman banget buat nugas wifi kencang colokan banyak tapi harganya lumayan mahal untuk mahasiswa",
+    "aspek_sentimen": [
+      {"aspek": "suasana",   "term": "nyaman",        "polaritas": "positif"},
+      {"aspek": "fasilitas", "term": "wifi kencang",  "polaritas": "positif"},
+      {"aspek": "fasilitas", "term": "colokan banyak","polaritas": "positif"},
+      {"aspek": "harga",     "term": "mahal",         "polaritas": "negatif"}
+    ]
+  },
+  {
+    "teks": "suasananya enak lighting bagus cocok buat foto pelayanan ramah dan cepat",
+    "aspek_sentimen": [
+      {"aspek": "suasana",   "term": "enak",          "polaritas": "positif"},
+      {"aspek": "suasana",   "term": "lighting bagus","polaritas": "positif"},
+      {"aspek": "pelayanan", "term": "ramah dan cepat","polaritas": "positif"}
+    ]
+  },
+  {
+    "teks": "harganya murah meriah cocok banget buat kantong mahasiswa suasananya juga cozy",
+    "aspek_sentimen": [
+      {"aspek": "harga",   "term": "murah meriah",  "polaritas": "positif"},
+      {"aspek": "suasana", "term": "cozy",           "polaritas": "positif"}
+    ]
+  },
+  {
+    "teks": "wifi super kencang cocok buat kerja remote tapi lokasinya agak tersembunyi",
+    "aspek_sentimen": [
+      {"aspek": "fasilitas", "term": "wifi super kencang","polaritas": "positif"},
+      {"aspek": "lokasi",    "term": "tersembunyi",        "polaritas": "negatif"}
+    ]
+  },
+  {
+    "teks": "pelayanannya lambat kalau lagi ramai tapi tempatnya nyaman dan bersih",
+    "aspek_sentimen": [
+      {"aspek": "pelayanan", "term": "lambat",  "polaritas": "negatif"},
+      {"aspek": "suasana",   "term": "nyaman",  "polaritas": "positif"},
+      {"aspek": "fasilitas", "term": "bersih",  "polaritas": "positif"}
+    ]
+  },
+  {
+    "teks": "tempatnya rancak banget suasana nyaman pelayanan ramah harga reasonable",
+    "aspek_sentimen": [
+      {"aspek": "suasana",   "term": "rancak",     "polaritas": "positif"},
+      {"aspek": "suasana",   "term": "nyaman",     "polaritas": "positif"},
+      {"aspek": "pelayanan", "term": "ramah",      "polaritas": "positif"},
+      {"aspek": "harga",     "term": "reasonable", "polaritas": "positif"}
+    ]
+  },
+  {
+    "teks": "kopinya mantap harga wajar untuk kualitasnya lokasi strategis di tengah kota",
+    "aspek_sentimen": [
+      {"aspek": "suasana", "term": "mantap",     "polaritas": "positif"},
+      {"aspek": "harga",   "term": "wajar",      "polaritas": "positif"},
+      {"aspek": "lokasi",  "term": "strategis",  "polaritas": "positif"}
+    ]
+  },
+  {
+    "teks": "parkir susah kalau akhir pekan tapi kopi enak dan tempat nyaman",
+    "aspek_sentimen": [
+      {"aspek": "lokasi",    "term": "parkir susah", "polaritas": "negatif"},
+      {"aspek": "suasana",   "term": "nyaman",       "polaritas": "positif"},
+      {"aspek": "fasilitas", "term": "kopi enak",    "polaritas": "positif"}
+    ]
+  },
+  {
+    "teks": "akses parkir mudah dekat jalan utama suasana tenang cocok buat meeting",
+    "aspek_sentimen": [
+      {"aspek": "lokasi",  "term": "parkir mudah",  "polaritas": "positif"},
+      {"aspek": "lokasi",  "term": "dekat jalan",   "polaritas": "positif"},
+      {"aspek": "suasana", "term": "tenang",         "polaritas": "positif"}
+    ]
+  },
+  {
+    "teks": "fasilitas biasa aja wifi kadang lemot tapi suasana outdoor bagus",
+    "aspek_sentimen": [
+      {"aspek": "fasilitas", "term": "biasa",       "polaritas": "netral"},
+      {"aspek": "fasilitas", "term": "wifi lemot",  "polaritas": "negatif"},
+      {"aspek": "suasana",   "term": "outdoor bagus","polaritas": "positif"}
+    ]
+  }
+]

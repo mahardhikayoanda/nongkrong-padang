@@ -1,0 +1,14 @@
+# Python Virtual Environment
+ml_model/venv/
+venv/
+env/
+__pycache__/
+
+# Machine Learning Models
+*.safetensors
+*.pt
+*.pth
+*.bin
+
+# File OS / Lainnya
+.DS_Store

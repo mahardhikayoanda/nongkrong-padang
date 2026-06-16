@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+
+  # ─── DATABASE ───────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: nongkrong_postgres
+    environment:
+      POSTGRES_USER: nongkrong_user
+      POSTGRES_PASSWORD: nongkrong_pass
+      POSTGRES_DB: nongkrong_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db:/docker-entrypoint-initdb.d
+    networks:
+      - nongkrong_net
+
+  # ─── CACHE ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: nongkrong_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - nongkrong_net
+
+  # ─── KAFKA (dengan Zookeeper) ───────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: nongkrong_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - nongkrong_net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: nongkrong_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - nongkrong_net
+
+  # ─── AIRFLOW ────────────────────────────────────────
+  airflow:
+    image: apache/airflow:2.8.0
+    container_name: nongkrong_airflow
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://nongkrong_user:nongkrong_pass@postgres/nongkrong_db
+      AIRFLOW__CORE__FERNET_KEY: '_f8jFdRNgzwZ7mmUOTTCop_z28dVs3XQv9IUzzK-IxU='
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'your-secret-key-here'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../pipeline/dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create
+      --username admin
+      --password admin
+      --firstname Admin
+      --lastname User
+      --role Admin
+      --email admin@nongkrong.com &&
+      airflow webserver &
+      airflow scheduler
+      "
+    networks:
+      - nongkrong_net
+
+volumes:
+  postgres_data:
+  airflow_logs:
+
+networks:
+  nongkrong_net:
+    driver: bridge
