@@ -68,6 +68,7 @@ services:
       - "8080:8080"
     volumes:
       - ../pipeline/dags:/opt/airflow/dags
+      - ../ml_model:/opt/airflow/ml_model
       - airflow_logs:/opt/airflow/logs
     command: >
       bash -c "

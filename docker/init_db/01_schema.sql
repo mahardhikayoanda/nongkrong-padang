@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     email          VARCHAR(150) UNIQUE NOT NULL,
     password       VARCHAR(255) NOT NULL,  -- bcrypt hash
     role           VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    jenis_kelamin  VARCHAR(20),
     preferensi_konteks JSONB DEFAULT '{}',
     created_at     TIMESTAMP DEFAULT NOW()
 );

@@ -8,6 +8,7 @@ class UserRegister(BaseModel):
     nama: str
     email: EmailStr
     password: str
+    jenis_kelamin: str
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -57,6 +58,8 @@ class KonteksRequest(BaseModel):
     waktu: str          # pagi | siang | sore | malam
     tujuan: str         # kerja | hangout | kencan | meeting
     rombongan: str      # sendiri | berdua | kecil | besar
+    hari: str = "kerja" # kerja | akhir_pekan
+    kategori: Optional[str] = None  # kafe | resto | co-working
     top_k: int = 10
 
 class RekomendasiItem(BaseModel):
@@ -84,6 +87,7 @@ class UserResponse(BaseModel):
     nama: str
     email: str
     role: str
+    jenis_kelamin: Optional[str] = None
     preferensi_konteks: dict
 
     class Config:

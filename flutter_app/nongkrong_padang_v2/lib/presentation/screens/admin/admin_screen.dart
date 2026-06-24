@@ -14,11 +14,38 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   bool isLoading = false;
   List<dynamic> dags = [];
+  Map<String, dynamic>? absaStats;
+  Map<String, dynamic>? recStats;
 
   @override
   void initState() {
     super.initState();
-    _fetchDags();
+    _refreshAll();
+  }
+
+  Future<void> _refreshAll() async {
+    await Future.wait([
+      _fetchDags(),
+      _fetchStats(),
+    ]);
+  }
+
+  Future<void> _fetchStats() async {
+    try {
+      final info = await StorageHelper.getUserInfo();
+      final userId = info['id_user'];
+
+      final absaResponse = await DioClient.instance.get('/admin/stats/absa');
+      final recResponse = await DioClient.instance
+          .get('/admin/stats/recommendation?user_id=$userId');
+
+      setState(() {
+        absaStats = absaResponse.data;
+        recStats = recResponse.data;
+      });
+    } catch (e) {
+      debugPrint('Error fetch stats: $e');
+    }
   }
 
   Future<void> _fetchDags() async {
@@ -81,8 +108,8 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _fetchDags,
-            tooltip: 'Refresh Status Pipeline',
+            onPressed: _refreshAll,
+            tooltip: 'Refresh Semua Data',
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -94,24 +121,46 @@ class _AdminScreenState extends State<AdminScreen> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchDags,
+        onRefresh: _refreshAll,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Card(
-                child: ListTile(
-                  leading:
-                      const Icon(Icons.bar_chart, color: AppColors.primary),
-                  title: const Text('Statistik Performa'),
-                  subtitle: const Text('Metrik ABSA & Rekomendasi'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    // Fitur statistik bisa ditambahkan di sini nanti
-                  },
-                ),
+              const Text(
+                'Statistik Performa Sistem',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMetricCard(
+                      'ABSA F1-Score',
+                      '${((absaStats?['ate_f1'] ?? 0) * 100).toStringAsFixed(1)}%',
+                      Icons.analytics,
+                      Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildMetricCard(
+                      'NDCG@10',
+                      '${(recStats?['ndcg'] ?? 0).toStringAsFixed(3)}',
+                      Icons.ads_click,
+                      Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildMetricCard(
+                'Precision@10 (Recommendation)',
+                '${((recStats?['precision'] ?? 0) * 100).toStringAsFixed(1)}%',
+                Icons.check_circle,
+                Colors.green,
+                fullWidth: true,
               ),
               const SizedBox(height: 24),
               const Text(
@@ -139,7 +188,9 @@ class _AdminScreenState extends State<AdminScreen> {
                       child: ListTile(
                         leading: Icon(
                           Icons.account_tree,
-                          color: dag['is_active'] ? Colors.green : Colors.grey,
+                          color: dag['is_active'] != null && dag['is_active']
+                              ? Colors.green
+                              : Colors.grey,
                         ),
                         title: Text(dag['dag_id'],
                             style: const TextStyle(
@@ -161,6 +212,43 @@ class _AdminScreenState extends State<AdminScreen> {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetricCard(
+      String title, String value, IconData icon, Color color,
+      {bool fullWidth = false}) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment:
+              fullWidth ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 20),
+                const SizedBox(width: 8),
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
         ),
       ),
     );

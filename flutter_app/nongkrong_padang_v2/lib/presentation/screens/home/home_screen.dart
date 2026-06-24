@@ -16,6 +16,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _waktu = 'malam';
   String _tujuan = 'hangout';
   String _rombongan = 'kecil';
+  String _hari = 'kerja';
+  String? _selectedKategori; // kafe | resto | co-working
 
   List<RekomendasiItem> _rekomendasi = [];
   bool _isLoading = false;
@@ -46,6 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
           'waktu': _waktu,
           'tujuan': _tujuan,
           'rombongan': _rombongan,
+          'hari': _hari,
+          'kategori': _selectedKategori,
           'top_k': 10,
         },
       );
@@ -69,6 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // ── Chip Konteks ────────────────────────────
             _buildKonteksChips(),
+
+            // ── Kategori Selector ───────────────────────
+            _buildCategorySelector(),
 
             // ── List Rekomendasi ────────────────────────
             Expanded(
@@ -120,11 +127,75 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             IconButton(
               icon: const Icon(Icons.search, color: Colors.white),
-              onPressed: () => context.go('/search'),
+              onPressed: () => context.push('/search'),
             ),
           ],
         ),
       );
+
+  Widget _buildCategorySelector() => Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          children: [
+            _categoryChip(null, 'Semua', Icons.all_inclusive),
+            const SizedBox(width: 8),
+            _categoryChip('kafe', 'Kafe', Icons.coffee),
+            const SizedBox(width: 8),
+            _categoryChip('resto', 'Restoran', Icons.restaurant),
+            const SizedBox(width: 8),
+            _categoryChip('co-working', 'Working', Icons.laptop),
+          ],
+        ),
+      );
+
+  Widget _categoryChip(String? id, String label, IconData icon) {
+    final isSelected = _selectedKategori == id;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedKategori = id);
+        _fetchRekomendasi();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.grey[300]!,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4))
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : Colors.grey[600],
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey[800],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildKonteksChips() => Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -147,6 +218,12 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.group,
               label: _rombongan[0].toUpperCase() + _rombongan.substring(1),
               onTap: _showRombonganPicker,
+            ),
+            const SizedBox(width: 8),
+            _konteksChip(
+              icon: Icons.calendar_today,
+              label: _hari == 'kerja' ? 'Hari Kerja' : 'Akhir Pekan',
+              onTap: _showHariPicker,
             ),
           ],
         ),
@@ -403,13 +480,13 @@ class _HomeScreenState extends State<HomeScreen> {
             case 0:
               break;
             case 1:
-              context.go('/search');
+              context.push('/search');
               break;
             case 2:
-              context.go('/favorites');
+              context.push('/favorites');
               break;
             case 3:
-              context.go('/profile');
+              context.push('/profile');
               break;
           }
         },
@@ -447,6 +524,16 @@ class _HomeScreenState extends State<HomeScreen> {
         selected: _rombongan,
         onSelect: (v) {
           setState(() => _rombongan = v);
+          _fetchRekomendasi();
+        },
+      );
+
+  void _showHariPicker() => _showPicker(
+        title: 'Pilih Hari',
+        options: ['kerja', 'akhir_pekan'],
+        selected: _hari,
+        onSelect: (v) {
+          setState(() => _hari = v);
           _fetchRekomendasi();
         },
       );

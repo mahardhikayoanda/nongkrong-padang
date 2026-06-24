@@ -10,21 +10,21 @@ from app.schemas.schemas import KonteksRequest, RekomendasiResponse, Rekomendasi
 # Sesuai Gambar 3.3 pada proposal (contextual weight vector)
 
 KONTEKS_BOBOT = {
-    # WAKTU × TUJUAN × ROMBONGAN
-    ("pagi", "kerja", "sendiri"):   [0.3, 0.1, 0.2, 0.2, 0.1, 0.1, 0.2, 0.1, 0.5, 0.2],
-    ("pagi", "kerja", "berdua"):    [0.3, 0.1, 0.2, 0.2, 0.1, 0.1, 0.2, 0.1, 0.4, 0.2],
-    ("siang", "kerja", "sendiri"):  [0.3, 0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, 0.5, 0.1],
-    ("malam", "kencan", "berdua"):  [0.6, 0.2, 0.2, 0.1, 0.2, 0.1, 0.5, 0.2, 0.1, 0.1],
-    ("malam", "hangout", "kecil"):  [0.5, 0.1, 0.3, 0.2, 0.3, 0.1, 0.3, 0.1, 0.2, 0.1],
-    ("sore", "hangout", "besar"):   [0.4, 0.1, 0.3, 0.2, 0.4, 0.1, 0.3, 0.1, 0.2, 0.1],
-    ("siang", "meeting", "kecil"):  [0.3, 0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.4, 0.1],
+    # (WAKTU, TUJUAN, ROMBONGAN, HARI)
+    ("pagi", "kerja", "sendiri", "kerja"):   [0.3, 0.1, 0.2, 0.2, 0.1, 0.1, 0.2, 0.1, 0.6, 0.1], # Fokus fasilitas (WiFi)
+    ("pagi", "kerja", "sendiri", "akhir_pekan"): [0.4, 0.1, 0.2, 0.1, 0.2, 0.1, 0.2, 0.1, 0.5, 0.1], # Lebih rileks
+    ("siang", "kerja", "sendiri", "kerja"):  [0.3, 0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, 0.5, 0.1],
+    ("malam", "kencan", "berdua", "akhir_pekan"): [0.8, 0.1, 0.2, 0.1, 0.2, 0.1, 0.6, 0.1, 0.1, 0.1], # Fokus suasana & pelayanan
+    ("malam", "hangout", "kecil", "kerja"):  [0.6, 0.1, 0.4, 0.2, 0.3, 0.1, 0.4, 0.1, 0.2, 0.1],
+    ("malam", "hangout", "kecil", "akhir_pekan"): [0.7, 0.1, 0.3, 0.1, 0.4, 0.1, 0.4, 0.1, 0.2, 0.1],
+    ("sore", "hangout", "besar", "akhir_pekan"): [0.6, 0.1, 0.3, 0.2, 0.4, 0.1, 0.3, 0.1, 0.3, 0.1], # Fokus lokasi/kapasitas
 }
 
 BOBOT_DEFAULT = [0.4, 0.1, 0.3, 0.1, 0.3, 0.1, 0.3, 0.1, 0.3, 0.1]
 
-def get_bobot_konteks(waktu: str, tujuan: str, rombongan: str) -> List[float]:
-    """Ambil vektor bobot berdasarkan kombinasi konteks."""
-    key = (waktu, tujuan, rombongan)
+def get_bobot_konteks(waktu: str, tujuan: str, rombongan: str, hari: str) -> List[float]:
+    """Ambil vektor bobot berdasarkan kombinasi konteks (4 dimensi)."""
+    key = (waktu, tujuan, rombongan, hari)
     return KONTEKS_BOBOT.get(key, BOBOT_DEFAULT)
 
 def weighted_cosine_similarity(v_tempat: List[float], w_konteks: List[float]) -> float:
@@ -71,18 +71,30 @@ class RekomendasiService:
         self.db = db
 
     def hitung_rekomendasi(self, konteks: KonteksRequest) -> RekomendasiResponse:
-        # 1. Ambil bobot konteks
-        bobot = get_bobot_konteks(konteks.waktu, konteks.tujuan, konteks.rombongan)
+        """
+        Fungsi utama untuk menghitung rekomendasi berbasis konteks.
+        Dilengkapi dengan fallback ke tempat terpopuler jika data profil belum siap.
+        """
+        # 1. Ambil bobot konteks (sekarang 4 dimensi: waktu, tujuan, rombongan, hari)
+        bobot = get_bobot_konteks(konteks.waktu, konteks.tujuan, konteks.rombongan, konteks.hari)
         
-        # 2. Ambil semua profil tempat dari database
-        profil_list = self.db.query(ProfilTempat).join(Tempat).all()
+        # 2. Ambil semua profil tempat dari database (opsional filter kategori)
+        query = self.db.query(ProfilTempat).join(Tempat)
+        if konteks.kategori:
+            query = query.filter(Tempat.kategori == konteks.kategori)
         
+        profil_list = query.all()
+        
+        # Check jika database benar-benar kosong (bahkan tabel tempat kosong)
         if not profil_list:
-            return RekomendasiResponse(
-                konteks=konteks.dict(),
-                total=0,
-                rekomendasi=[]
-            )
+            # Coba cek apakah ada data di tabel tempat walaupun belum ada profilnya
+            status_tempat = self.db.query(Tempat).count()
+            if status_tempat == 0:
+                print("[REKOMENDASI] Database tempat kosong.")
+                return RekomendasiResponse(konteks=konteks.dict(), total=0, rekomendasi=[])
+            
+            print("[REKOMENDASI] Profil kosong, fallback ke tempat terpopuler.")
+            return self._get_fallback_populer(konteks)
         
         # 3. Hitung skor untuk setiap tempat
         scored = []
@@ -93,11 +105,17 @@ class RekomendasiService:
             skor = weighted_cosine_similarity(profil.vektor_sentimen, bobot)
             scored.append((skor, profil))
         
-        # 4. Urutkan descending dan ambil Top-K
+        # 4. Cek hasil scoring. Jika semua 0 (Cold Start), gunakan fallback.
+        max_skor = max([s[0] for s in scored]) if scored else 0
+        if max_skor == 0:
+            print("[REKOMENDASI] Skor semua nol (Cold Start), fallback ke tempat terpopuler.")
+            return self._get_fallback_populer(konteks)
+            
+        # 5. Urutkan descending dan ambil Top-K
         scored.sort(key=lambda x: x[0], reverse=True)
         top_k = scored[:konteks.top_k]
         
-        # 5. Format response
+        # 6. Format response
         hasil = []
         for skor, profil in top_k:
             v = profil.vektor_sentimen
@@ -122,6 +140,36 @@ class RekomendasiService:
                 tag_konteks=tags
             ))
         
+        return RekomendasiResponse(
+            konteks=konteks.dict(),
+            total=len(hasil),
+            rekomendasi=hasil
+        )
+
+    def _get_fallback_populer(self, konteks: KonteksRequest) -> RekomendasiResponse:
+        """Helper untuk mengambil tempat dengan rating tertinggi sebagai fallback."""
+        query = self.db.query(Tempat)
+        if konteks.kategori:
+            query = query.filter(Tempat.kategori == konteks.kategori)
+            
+        top_rated = query.order_by(Tempat.rating_google.desc()).limit(konteks.top_k).all()
+        
+        hasil = []
+        for t in top_rated:
+            # Karena profil belum ada atau nol, gunakan dummy profil sentimen netral
+            sentimen = SentimenAspek()
+            
+            hasil.append(RekomendasiItem(
+                id_tempat=t.id_tempat,
+                nama_tempat=t.nama_tempat,
+                alamat=t.alamat,
+                rating_google=t.rating_google,
+                foto_url=t.foto_url,
+                skor_relevansi=0.0,
+                profil_sentimen=sentimen,
+                tag_konteks=["Terpopuler"]
+            ))
+            
         return RekomendasiResponse(
             konteks=konteks.dict(),
             total=len(hasil),

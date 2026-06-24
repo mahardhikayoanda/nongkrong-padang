@@ -18,8 +18,10 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _isLoading = true);
     try {
       final r = await DioClient.instance.post('/rekomendasi/', data: {
-        'waktu': _waktu, 'tujuan': _tujuan,
-        'rombongan': _rombongan, 'top_k': 20,
+        'waktu': _waktu,
+        'tujuan': _tujuan,
+        'rombongan': _rombongan,
+        'top_k': 20,
       });
       setState(() => _hasil = r.data['rekomendasi'] ?? []);
     } catch (e) {
@@ -50,11 +52,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     itemBuilder: (_, i) {
                       final t = _hasil[i];
                       return ListTile(
-                        leading: const Icon(Icons.coffee,
-                            color: AppColors.primary),
+                        leading:
+                            const Icon(Icons.coffee, color: AppColors.primary),
                         title: Text(t['nama_tempat'] ?? ''),
                         subtitle: Text(t['alamat'] ?? ''),
-                        onTap: () => context.go('/detail/${t['id_tempat']}'),
+                        onTap: () => context.push('/detail/${t['id_tempat']}'),
                       );
                     },
                   ),

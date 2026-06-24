@@ -14,6 +14,7 @@ class User(Base):
     email   = Column(String(150), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     role    = Column(String(20), default="user")
+    jenis_kelamin = Column(String(20))
     preferensi_konteks = Column(JSONB, default={})
     created_at = Column(TIMESTAMP, server_default=func.now())
 

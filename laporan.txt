@@ -1,0 +1,711 @@
+ 
+PROPOSAL TUGAS CAPSTONE PROJECT 
+ 
+IMPLEMENTASI AUTOMATED DATA PIPELINE DAN ASPECT-BASED 
+SENTIMENT ANALYSIS (ABSA) PADA SISTEM REKOMENDASI CONTEXT-
+AWARE UNTUK PENCARIAN TEMPAT NONGKRONG DI KOTA PADANG 
+ 
+  
+ 
+Oleh : 
+MAHARDHIKA YOANDA 2311081023 
+ 
+
+ 
+PROGRAM STUDI TEKNOLOGI REKAYASA PERANGKAT LUNAK JURUSAN TEKNOLOGI INFORMASI POLITEKNIK NEGERI PADANG 2026
+DAFTAR ISI 
+HALAMAN JUDUL .............................................................................................................. i 
+ABSTRAK ............................................................................................................................. ii 
+DAFTAR ISI......................................................................................................................... iii 
+ 
+BAB I  PENDAHULUAN ..................................................................................................... 1 	
+1.3  Tujuan	4 
+1.4  Batasan Masalah ........................................................................................................ 5 	
+1.5  Manfaat Penelitian 	6 
+BAB II  TINJAUAN PUSTAKA ......................................................................................... 7 2.1  Penelitian Terkait	7 
+2.2  Automated Data Pipeline	9 
+2.3  Aspect-Based Sentiment Analysis (ABSA) ............................................................. 10 	
+2.4  IndoBERT untuk NLP Bahasa Indonesia	11 
+2.5  Sistem Rekomendasi Context-Aware	12 
+2.6  Metrik Evaluasi Sistem Rekomendasi 	13 
+BAB III  METODOLOGI PENELITIAN ........................................................................ 15 3.1  Jenis dan Pendekatan Penelitian	15 
+3.2  Tahapan Penelitian	16 
+3.3  Pengumpulan Data	17 
+    3.3.1  Sumber Data	17 
+    3.3.2  Proses Pengumpulan Data	18 
+    3.3.3  Anotasi Data untuk Pelatihan Model ABSA	19 
+3.4  Perancangan Arsitektur Sistem	20 
+    3.4.1  Arsitektur Sistem Keseluruhan	20 
+    3.4.2  Desain Automated Data Pipeline	21 
+    3.4.3  Desain Model ABSA	22 
+    3.4.4  Desain Sistem Rekomendasi Context-Aware	23 
+
+1.1  Latar Belakang ........................................................................................................... 1 
+1.2  Rumusan Masalah ...................................................................................................... 3 
+3.5  Implementasi Sistem ................................................................................................ 24 
+    3.5.1  Stack Teknologi .......................................................................................... 24 
+    3.5.2  Pengembangan Aplikasi Mobile Flutter ..................................................... 25 
+3.6  Pengujian dan Evaluasi ............................................................................................ 26 
+    3.6.1  Pengujian Performa Model ABSA.............................................................. 26 
+    3.6.2  Pengujian Performa Sistem Rekomendasi .................................................. 27 
+    3.6.3  Pengujian Usability Aplikasi ...................................................................... 27 
+3.7  Jadwal Penelitian ..................................................................................................... 28 3.8  Kerangka Konseptual Penelitian .............................................................................. 29 
+ 
+DAFTAR PUSTAKA .......................................................................................................... 30 
+ 	  
+ABSTRAK 
+Pertumbuhan industri kuliner dan tempat nongkrong di Kota Padang terus berkembang pesat seiring meningkatnya aktivitas sosial masyarakat urban. Berdasarkan data Dinas Pariwisata Kota Padang, jumlah usaha kuliner dan kafe tumbuh rata-rata 15–20% per tahun dalam lima tahun terakhir. Namun, proses pencarian tempat yang sesuai dengan preferensi pengguna masih menghadapi tantangan serius, yaitu data ulasan yang tidak terstruktur, tidak konsisten, dan sulit diinterpretasikan secara otomatis. Sistem rekomendasi konvensional seringkali gagal menangkap nuansa kontekstual dan aspek spesifik dari ulasan pengguna, sehingga hasil rekomendasinya kurang personal dan relevan bagi pengguna. 
+Penelitian ini bertujuan merancang dan mengimplementasikan sistem rekomendasi berbasis Context-Aware yang mengintegrasikan Automated Data Pipeline dan Aspect-Based Sentiment Analysis (ABSA) untuk membantu pengguna menemukan tempat nongkrong yang sesuai di Kota Padang. Data ulasan dikumpulkan secara otomatis dari Google Maps melalui Google Places API menggunakan pipeline yang dibangun dengan Apache Airflow sebagai orkestrator alur kerja dan Apache Kafka sebagai message broker untuk pemrosesan data secara near-real-time. ABSA diterapkan menggunakan model IndoBERT yang telah di-finetune pada domain kuliner Indonesia untuk mengekstrak sentimen pada aspek-aspek spesifik seperti suasana/ambiance, harga/value for money, lokasi/aksesibilitas, pelayanan, dan 
+fasilitas. 
+Sistem rekomendasi Context-Aware yang dikembangkan mempertimbangkan faktor kontekstual seperti waktu kunjungan, tujuan kunjungan, dan jumlah anggota rombongan dalam menghasilkan rekomendasi yang personal. Antarmuka pengguna dibangun sebagai aplikasi mobile berbasis Flutter yang menampilkan hasil rekomendasi secara real-time beserta ringkasan sentimen per aspek untuk setiap tempat. Evaluasi sistem dilakukan menggunakan metrik Precision@K, Recall@K, NDCG@K untuk kualitas rekomendasi, F1Score untuk performa model ABSA, serta System Usability Scale (SUS) dan Task Completion Rate untuk pengujian usability aplikasi. Hasil yang diharapkan adalah sebuah sistem rekomendasi yang akurat, kontekstual, dan mampu meningkatkan pengalaman pengguna dalam menemukan tempat nongkrong yang tepat di Kota Padang. 
+Kata kunci: Automated Data Pipeline, Aspect-Based Sentiment Analysis, ABSA, IndoBERT, Sistem Rekomendasi, Context-Aware, Flutter, Apache Airflow, Apache Kafka, 
+Tempat Nongkrong, Kota Padang 
+BAB I PENDAHULUAN 
+1.1 Latar Belakang 
+Kota Padang sebagai ibu kota Provinsi Sumatera Barat mengalami pertumbuhan signifikan dalam sektor kuliner dan hiburan, khususnya tempat nongkrong seperti kafe, restoran, dan kedai kopi. Fenomena budaya nongkrong yang kian populer di kalangan masyarakat urban, terutama generasi milenial dan Gen Z, mendorong tumbuhnya ratusan tempat usaha baru setiap tahunnya. Berdasarkan data Dinas Pariwisata Kota Padang, jumlah usaha kuliner dan kafe meningkat rata-rata 15–20% per tahun dalam lima tahun terakhir, menciptakan tantangan bagi konsumen dalam memilih tempat yang benar-benar sesuai dengan preferensi dan kebutuhan mereka. Kondisi ini diperparah oleh tidak adanya platform rekomendasi lokal yang memahami karakteristik unik budaya dan bahasa masyarakat Minangkabau. 
+Proses pencarian tempat nongkrong saat ini umumnya mengandalkan ulasan di platform seperti Google Maps dan TripAdvisor. Namun, volume ulasan yang sangat besar dan tidak terstruktur menyulitkan pengguna untuk mendapatkan gambaran yang komprehensif secara cepat. Ulasan yang ada seringkali bersifat umum dan tidak memberikan informasi spesifik mengenai aspek-aspek yang paling relevan bagi pengguna, seperti kualitas WiFi untuk bekerja, suasana tempat di malam hari, kisaran harga, atau ketersediaan area parkir. Kondisi ini menciptakan kesenjangan informasi (information gap) yang secara langsung berdampak pada pengalaman pengguna dalam menemukan tempat yang ideal (Pontiki et al., 2016). Lebih jauh, rating bintang tunggal yang menjadi standar platform ulasan saat ini tidak dapat mencerminkan kompleksitas preferensi pengguna yang berbedabeda. 
+Aspect-Based Sentiment Analysis (ABSA) merupakan teknik Natural Language Processing (NLP) tingkat lanjut yang mampu mengekstrak sentimen dari teks ulasan pada aspek-aspek tertentu yang telah didefinisikan sebelumnya. Berbeda dengan analisis sentimen konvensional yang hanya menghasilkan polaritas umum (positif/negatif/netral), ABSA dapat mengidentifikasi bahwa suatu tempat memiliki sentimen positif pada aspek rasa makanan namun sentimen negatif pada aspek pelayanan, sehingga memberikan informasi yang jauh lebih granular dan berguna (Hoang et al., 2022). Dengan memanfaatkan model pretrained IndoBERT yang dioptimalkan untuk bahasa Indonesia, sistem dapat memahami nuansa bahasa lokal, termasuk penggunaan bahasa Minang dan slang yang umum ditemukan dalam ulasan pengguna di Kota Padang. 
+Namun, penerapan ABSA dalam sistem rekomendasi real-world menghadapi tantangan teknis berupa kebutuhan akan data yang segar, konsisten, dan dalam volume besar. Proses pengumpulan data secara manual tidak dapat mengikuti laju perubahan ulasan yang terus bertambah setiap harinya. Automated Data Pipeline yang dibangun menggunakan teknologi seperti Apache Airflow untuk orkestrasi alur kerja dan Apache Kafka untuk streaming data real-time menjadi solusi krusial untuk mengatasi tantangan ini (Psallidas et al., 2022). Pipeline otomatis memungkinkan sistem untuk terus memperbarui basis data ulasan, melakukan preprocessing, dan memperbarui representasi aspek-sentimen secara berkala tanpa intervensi manual yang intensif. 
+Selain itu, sistem rekomendasi yang efektif tidak hanya harus memahami preferensi pengguna secara statis, tetapi juga harus mampu menyesuaikan rekomendasinya berdasarkan konteks situasional. Sistem rekomendasi Context-Aware (CARS) mengintegrasikan informasi kontekstual seperti waktu kunjungan (pagi, siang, malam, hari kerja, akhir pekan), kondisi cuaca, jumlah anggota rombongan, dan tujuan kunjungan (bekerja, bersantai, kencan, pertemuan bisnis) dalam proses pembuatan rekomendasi (Adomavicius & Tuzhilin, 2015). Sebagai contoh, sebuah kafe dengan pencahayaan redup dan musik jazz mungkin sangat sesuai untuk kencan romantis di malam hari, tetapi kurang ideal untuk sesi kerja di pagi hari. 
+Berdasarkan latar belakang tersebut, penelitian ini mengusulkan implementasi sistem rekomendasi tempat nongkrong di Kota Padang yang mengintegrasikan Automated Data Pipeline dan ABSA dalam kerangka Context-Aware Recommender System. Antarmuka pengguna dikembangkan sebagai aplikasi mobile berbasis Flutter yang memudahkan akses dan penggunaan oleh masyarakat umum. Penelitian ini diharapkan dapat menghasilkan solusi nyata yang meningkatkan pengalaman pengguna dalam menemukan tempat nongkrong yang sesuai dengan preferensi dan konteks kebutuhan mereka di Kota Padang, sekaligus berkontribusi pada perkembangan riset NLP bahasa Indonesia dan sistem rekomendasi berbasis sentimen. 
+1.2 Rumusan Masalah 
+Berdasarkan latar belakang yang telah diuraikan, rumusan masalah pada penelitian ini adalah sebagai berikut: 
+1.	Bagaimana merancang dan mengimplementasikan Automated Data Pipeline yang mampu mengumpulkan, memproses, dan menyimpan data ulasan tempat nongkrong dari Google Maps secara otomatis, berkelanjutan, dan terskala menggunakan Apache Airflow dan Apache Kafka? 
+2.	Bagaimana mengimplementasikan model Aspect-Based Sentiment Analysis (ABSA) berbasis IndoBERT yang di-fine-tune pada domain kuliner Indonesia untuk mengekstrak sentimen pada aspek-aspek spesifik (suasana, harga, lokasi, pelayanan, dan fasilitas) dari ulasan berbahasa Indonesia yang juga mengandung bahasa Minang dan bahasa gaul? 
+3.	Bagaimana merancang dan mengimplementasikan sistem rekomendasi ContextAware yang mengintegrasikan representasi aspek-sentimen hasil ABSA dengan informasi kontekstual pengguna (waktu, tujuan kunjungan, ukuran rombongan) untuk menghasilkan rekomendasi tempat nongkrong yang personal, relevan, dan akurat di Kota Padang? 
+4.	Bagaimana performa sistem rekomendasi yang dibangun diukur menggunakan metrik Precision@K, Recall@K, dan NDCG@K, serta bagaimana tingkat usabilitas aplikasi mobile Flutter yang dikembangkan berdasarkan System Usability Scale (SUS) dan Task Completion Rate? 
+1.3 Tujuan 
+Tujuan dari penelitian ini adalah: 
+1.	Merancang dan mengimplementasikan Automated Data Pipeline menggunakan Apache Airflow dan Apache Kafka untuk pengumpulan dan pemrosesan data ulasan tempat nongkrong secara otomatis dari Google Maps melalui Google Places API, sekaligus memvalidasi keandalannya melalui uji beban dan monitoring pipeline. 
+2.	Mengimplementasikan dan mengevaluasi model ABSA berbasis IndoBERT yang difine-tune pada dataset anotasi domain kuliner Indonesia untuk mengekstrak sentimen berbasis aspek dari ulasan pengguna, dengan target F1-Score minimal 80% pada task Aspect Sentiment Classification. 
+3.	Membangun sistem rekomendasi Context-Aware yang mengintegrasikan representasi aspek-sentimen ABSA dengan faktor kontekstual pengguna, serta mengembangkan antarmuka mobile berbasis Flutter yang intuitif dan responsif sebagai media akses sistem. 
+4.	Mengevaluasi performa keseluruhan sistem menggunakan metrik standar evaluasi sistem rekomendasi (Precision@K, Recall@K, NDCG@K) dan melakukan pengujian usability terhadap aplikasi mobile menggunakan SUS dan Task Completion Rate dengan target skor SUS minimal 70 (kategori Good). 
+1.4 Batasan Masalah 
+Untuk menjaga fokus dan kedalaman penelitian, beberapa batasan masalah ditetapkan sebagai berikut: 
+1.	Cakupan geografis sistem rekomendasi dibatasi hanya pada tempat nongkrong yang meliputi kafe, kedai kopi, restoran casual, dan co-working space yang berlokasi di wilayah administratif Kota Padang, Provinsi Sumatera Barat. 
+2.	Satu-satunya sumber data ulasan yang digunakan adalah Google Maps melalui Google Places API, yang merupakan jalur resmi dan legal untuk mengakses ulasan pengguna secara programatik. Pendekatan ini sepenuhnya mematuhi Terms of Service Google dan prinsip etika penelitian dalam pengumpulan data. 
+3.	Model ABSA dilatih dan dievaluasi pada ulasan berbahasa Indonesia, termasuk campuran bahasa Minang dan bahasa gaul yang lazim digunakan masyarakat Kota Padang, namun tidak mencakup pemrosesan ulasan dalam bahasa asing (Inggris, Mandarin, dan lain-lain). 
+4.	Aspek yang dianalisis dalam ABSA dibatasi pada lima aspek utama yang paling sering muncul dalam ulasan tempat kuliner di Indonesia, yaitu: suasana/ambiance, harga/value for money, lokasi/aksesibilitas, pelayanan/service, dan fasilitas (WiFi, parkir, colokan listrik). 
+5.	Faktor kontekstual yang dipertimbangkan dalam sistem rekomendasi meliputi tiga dimensi utama: waktu kunjungan (pagi/siang/sore/malam pada hari kerja/akhir pekan), tujuan kunjungan (bekerja, bersantai, bertemu teman, kencan, pertemuan bisnis), dan ukuran rombongan (solo, pasangan, kelompok kecil 3–5 orang, kelompok besar >5 orang). Sistem tidak mencakup preferensi diet, alergi makanan, atau batasan keagamaan. 
+6.	Pengembangan aplikasi mobile dibatasi pada platform Android (minimum API level 21/Android 5.0 Lollipop) menggunakan framework Flutter, tanpa mencakup pengembangan versi iOS dalam lingkup penelitian ini. 
+1.5 Manfaat Penelitian 
+Penelitian ini diharapkan memberikan manfaat bagi berbagai pihak, antara lain: 
+Manfaat Teoritis: 
+•	Memberikan kontribusi pada pengembangan riset NLP bahasa Indonesia, khususnya dalam domain ABSA untuk teks kuliner berbahasa Indonesia yang mengandung campuran dialek Minang. 
+•	Menyediakan kerangka kerja arsitektur integrasi Automated Data Pipeline, ABSA, dan Context-Aware Recommender System yang dapat dijadikan referensi untuk penelitian sejenis. 
+•	Menghasilkan dataset anotasi ABSA domain kuliner berbahasa Indonesia yang dapat digunakan untuk penelitian selanjutnya. 
+Manfaat Praktis: 
+•	Membantu masyarakat Kota Padang, khususnya generasi muda, dalam menemukan tempat nongkrong yang sesuai dengan preferensi dan konteks kebutuhan mereka secara efisien. 
+•	Memberikan informasi berbasis data yang lebih terperinci dan berguna bagi pemilik usaha kuliner dalam memahami persepsi pelanggan terhadap aspek-aspek spesifik bisnis mereka. 
+•	Menghasilkan aplikasi mobile yang dapat langsung digunakan dan bermanfaat bagi masyarakat Kota Padang dan sekitarnya. 
+ 	 
+BAB II TINJAUAN PUSTAKA 
+2.1 Penelitian Terkait 
+Sejumlah penelitian relevan telah dilakukan dalam bidang ABSA, automated data pipeline, dan sistem rekomendasi berbasis konteks yang menjadi landasan bagi penelitian ini. Pontiki et al. (2016) melalui SemEval Shared Task on ABSA menetapkan fondasi benchmark untuk tugas ABSA multibahasa dan memperkenalkan taksonomi aspek yang kemudian banyak diadopsi oleh penelitian-penelitian berikutnya di berbagai domain, termasuk kuliner dan perhotelan. Penelitian ini menetapkan standar evaluasi yang digunakan secara luas, termasuk dalam penelitian ini, dengan membagi tugas ABSA menjadi Aspect Category Detection, Aspect Term Extraction, dan Aspect Sentiment Classification. Taksonomi aspek yang dikembangkan dalam SemEval menjadi acuan utama dalam pendefinisian dan pengelompokan aspek pada domain tempat nongkrong di penelitian ini. 
+Hoang et al. (2022) mengembangkan pendekatan ABSA berbasis transformer untuk domain restoran dan hotel dalam bahasa Inggris menggunakan model BERT, mencapai akurasi state-of-the-art pada dataset SemEval dengan F1-Score sebesar 87,4% untuk task Aspect Sentiment Classification. Pendekatan mereka dalam melakukan fine-tuning BERT dengan menambahkan auxiliary sentence untuk setiap kategori aspek menjadi inspirasi utama bagi implementasi fine-tuning IndoBERT pada domain kuliner Indonesia dalam penelitian ini. Kang et al. (2023) selanjutnya mengusulkan kerangka kerja unified untuk ABSA menggunakan generative pre-trained models (GPT-series) yang mampu menangani berbagai subtask ABSA secara simultan dalam satu model tunggal, menunjukkan potensi besar pendekatan generatif dalam memecahkan tugas ekstraksi aspek yang kompleks. 
+Pada sisi pipeline data, Psallidas et al. (2022) mengkaji tantangan dan solusi dalam membangun sistem machine learning end-to-end yang mencakup data ingestion, preprocessing, feature engineering, model training, dan model serving secara otomatis dan berkelanjutan. Penelitian mereka menyoroti pentingnya monitoring data drift dan model drift untuk menjaga kualitas prediksi sistem dari waktu ke waktu, yang sangat relevan dengan kebutuhan pipeline berkelanjutan pada penelitian ini. Li et al. (2021) mengeksplorasi integrasi streaming data real-time menggunakan Apache Kafka dengan pipeline machine learning untuk analisis sentimen pada skala besar, menunjukkan bahwa arsitektur eventdriven berbasis Kafka mampu mengurangi latensi pemrosesan ulasan baru hingga 70% dibandingkan pendekatan batch processing konvensional. 
+Dalam konteks sistem rekomendasi, Adomavicius dan Tuzhilin (2015) memberikan survei komprehensif tentang Context-Aware Recommender Systems (CARS) dan mendemonstrasikan tiga pendekatan utama untuk mengintegrasikan dimensi kontekstual ke dalam algoritma rekomendasi: contextual pre-filtering, contextual post-filtering, dan contextual modeling. Zhang et al. (2022) mengintegrasikan analisis sentimen berbasis aspek dengan collaborative filtering untuk meningkatkan kualitas rekomendasi pada platform ecommerce, membuktikan bahwa representasi sentimen berbasis aspek secara signifikan lebih informatif dibandingkan rating bintang tunggal dalam menangkap preferensi pengguna. Rahmadani dan Suyanto (2023) secara khusus mengembangkan sistem ABSA untuk ulasan restoran berbahasa Indonesia menggunakan IndoBERT, mencapai F1-Score 82,3% pada task Aspect Sentiment Classification, memberikan baseline yang kuat dan insight berharga tentang performa model pada korpus bahasa Indonesia yang menjadi referensi langsung bagi penelitian ini. 
+Berbeda dari penelitian-penelitian sebelumnya yang umumnya menangani satu aspek dari sistem secara terpisah, penelitian ini memberikan kontribusi unik dengan mengintegrasikan ketiga komponen utama (automated data pipeline, ABSA, dan CARS) dalam satu sistem terpadu yang diimplementasikan untuk konteks lokal Kota Padang. Integrasi ini memungkinkan rekomendasi yang tidak hanya berbasis sentimen aspek, tetapi juga kontekstual dan diperbarui secara real-time, sebuah pendekatan yang belum pernah diterapkan secara komprehensif untuk kasus penggunaan tempat nongkrong di Indonesia. 
+2.2 Automated Data Pipeline 
+Automated Data Pipeline adalah serangkaian proses otomatis yang dirancang untuk mengumpulkan, membersihkan, mentransformasi, dan memuat data dari berbagai sumber ke dalam sistem penyimpanan atau pemrosesan target dengan intervensi manusia yang minimal (Psallidas et al., 2022). Dalam konteks penelitian ini, pipeline otomatis menjadi komponen infrastruktur yang kritis karena kebutuhan akan pembaruan data ulasan yang berkelanjutan dari Google Maps, dimana ratusan ulasan baru dapat ditambahkan oleh pengguna setiap harinya untuk tempat-tempat nongkrong di Kota Padang. 
+Apache Airflow digunakan sebagai platform orkestrasi alur kerja (workflow orchestration) yang memungkinkan pendefinisian, penjadwalan, dan pemantauan pipeline data dalam bentuk Directed Acyclic Graph (DAG). Setiap DAG merepresentasikan urutan tugas (tasks) yang harus dieksekusi secara berurutan atau paralel, mulai dari tugas scraping data dari Google Maps API, preprocessing dan normalisasi teks, inferensi model ABSA untuk ekstraksi aspek-sentimen, hingga pembaruan basis data rekomendasi di PostgreSQL. Airflow menyediakan antarmuka web yang komprehensif untuk monitoring status eksekusi setiap DAG, penanganan kegagalan otomatis melalui mekanisme retry, dan alerting via email atau Slack ketika pipeline mengalami error. 
+Apache Kafka berperan sebagai message broker terdistribusi untuk streaming data real-time, memungkinkan pemrosesan ulasan baru secara near-real-time tanpa harus menunggu proses batch scheduled berikutnya selesai (Li et al., 2021). Arsitektur event-driven berbasis Kafka memisahkan proses produksi data (scraping) dari proses konsumsi data (preprocessing dan inferensi ABSA), sehingga setiap komponen dapat berkembang dan discale secara independen. Kafka juga menyediakan mekanisme penyimpanan pesan yang persisten dengan retention policy yang dapat dikonfigurasi, memastikan tidak ada ulasan yang hilang meskipun terjadi kegagalan sementara pada komponen downstream. 
+Arsitektur pipeline yang diusulkan menggunakan pola hybrid batch-streaming: Airflow mengorkestrasikan proses batch terjadwal (setiap 24 jam) untuk mengambil ulasan terbaru dari seluruh tempat nongkrong yang terdaftar melalui Google Places API, sementara Kafka berperan sebagai buffer antara proses scraping dan proses inferensi ABSA untuk memastikan tidak ada data yang hilang akibat perbedaan kecepatan pemrosesan antara kedua komponen tersebut. 
+2.3 Aspect-Based Sentiment Analysis (ABSA) 
+Aspect-Based Sentiment Analysis (ABSA) adalah cabang dari analisis sentimen yang bertujuan untuk mengidentifikasi sentimen terhadap aspek-aspek spesifik yang disebutkan dalam sebuah teks, bukan hanya sentimen keseluruhan dokumen (Pontiki et al., 2016). Dalam konteks ulasan tempat kuliner, ABSA dapat mengurai ulasan seperti “WiFi-nya kencang banget tapi harganya mahal untuk kantong mahasiswa” menjadi dua sentimen terpisah: sentimen positif pada aspek fasilitas WiFi, dan sentimen negatif pada aspek harga. Kemampuan penguraian granular ini jauh lebih informatif dibandingkan analisis sentimen konvensional yang akan mengklasifikasikan ulasan tersebut sebagai sentimen campuran (mixed) tanpa detail lebih lanjut. 
+ABSA secara umum mencakup dua subtask utama yang saling terkait: (1) Aspect Term Extraction (ATE), yaitu proses mengidentifikasi term atau frasa aspek yang disebutkan secara eksplisit dalam teks (misalnya: “WiFi”, “harga”, “pelayanan”, “kursi”), dan (2) Aspect Sentiment Classification (ASC), yaitu proses menentukan polaritas sentimen (positif, negatif, atau netral) terhadap setiap aspek yang teridentifikasi. Selain dua subtask utama ini, penelitian terkini juga mengembangkan subtask Opinion Term Extraction (OTE) dan AspectOpinion-Sentiment Triplet Extraction (ASTE) yang mengekstrak ekspresi opini yang mendukung sentimen suatu aspek (Kang et al., 2023), memberikan informasi yang lebih kaya dan dapat dijelaskan (explainable) kepada pengguna akhir. 
+Dalam penelitian ini, ABSA diterapkan pada ulasan tempat nongkrong dalam bahasa Indonesia dengan lima kategori aspek yang telah ditentukan: suasana/ambiance (mencakup dekorasi, pencahayaan, kebisingan, dan nuansa tempat), harga/value for money (mencakup keterjangkauan harga dan kesesuaian harga dengan kualitas), lokasi/aksesibilitas (mencakup kemudahan akses, ketersediaan parkir, dan transportasi umum), pelayanan (mencakup kecepatan, keramahan, dan profesionalisme staf), serta fasilitas (mencakup kualitas WiFi, ketersediaan colokan listrik, toilet, dan AC). Pendekatan pipeline-based ABSA yang memisahkan ATE dan ASC sebagai dua model sekuensial dipilih karena memungkinkan interpretabilitas yang lebih baik dan kemudahan dalam identifikasi serta perbaikan kesalahan pada setiap tahap pemrosesan (Hoang et al., 2022). 
+2.4 IndoBERT untuk NLP Bahasa Indonesia 
+IndoBERT adalah model Bidirectional Encoder Representations from Transformers (BERT) yang dilatih secara khusus pada korpus bahasa Indonesia skala besar sebesar 4 GB yang mencakup teks dari Wikipedia Indonesia, berita online, dan data web crawling, dikembangkan oleh Wilie et al. (2020) sebagai bagian dari proyek IndoNLU (Indonesian Natural Language Understanding). Model ini menggunakan arsitektur BERT-base dengan 12 layer transformer, 768 dimensi hidden state, 12 attention heads, dan total 110 juta parameter, dilatih menggunakan tugas Masked Language Modeling (MLM) dan Next Sentence Prediction (NSP) yang sama dengan BERT orisinal. 
+IndoBERT telah menunjukkan performa superior dibandingkan model multilingual seperti mBERT (multilingual BERT) pada berbagai tugas NLP berbahasa Indonesia, termasuk Named Entity Recognition, Sentiment Analysis, Natural Language Inference, dan Question Answering. Keunggulan ini berasal dari pemahaman yang lebih mendalam terhadap kosakata, morfologi, sintaksis, dan pragmatik bahasa Indonesia yang diperoleh dari pelatihan pada korpus monolingual yang besar, dibandingkan mBERT yang harus berbagi kapasitas model untuk 104 bahasa sekaligus. Untuk konteks Kota Padang yang banyak menggunakan campuran bahasa Indonesia, bahasa Minang, dan bahasa gaul dalam ulasan, IndoBERT menjadi pilihan yang paling tepat. 
+Untuk kebutuhan ABSA pada domain tempat nongkrong, IndoBERT di-fine-tune menggunakan dataset anotasi yang dibuat secara khusus dari ulasan tempat kuliner di Kota Padang. Proses fine-tuning memanfaatkan strategi auxiliary sentence yang menambahkan kalimat pertanyaan aspek (misalnya: “Bagaimana suasana tempat ini?”) sebagai input tambahan untuk mengarahkan model fokus pada aspek tertentu, mengikuti pendekatan yang terbukti efektif pada penelitian Hoang et al. (2022). 
+2.5 Sistem Rekomendasi Context-Aware 
+Sistem Rekomendasi Context-Aware (CARS) adalah sistem rekomendasi yang secara eksplisit memodelkan dan mengintegrasikan informasi kontekstual dalam proses pembuatan rekomendasi, berbeda dari sistem rekomendasi tradisional yang hanya mempertimbangkan relasi dua dimensi antara pengguna dan item (Adomavicius & Tuzhilin, 2015). Secara formal, jika sistem rekomendasi konvensional mendefinisikan fungsi utilitas sebagai R: User × Item → Rating, maka CARS memperluas model ini menjadi fungsi tiga dimensi R: User × Item × Context → Rating, dimana Context merepresentasikan informasi situasional yang relevan pada saat interaksi pengguna-item terjadi. 
+Terdapat tiga paradigma utama dalam implementasi CARS. Pendekatan Contextual Pre-Filtering memfilter item atau data rating yang tidak relevan dengan konteks saat ini sebelum menjalankan algoritma rekomendasi utama. Pendekatan Contextual Post-Filtering menjalankan algoritma rekomendasi standar terlebih dahulu pada seluruh dataset, kemudian memfilter atau meranking ulang hasil rekomendasi berdasarkan kesesuaiannya dengan konteks pengguna saat ini. Pendekatan Contextual Modeling mengintegrasikan informasi kontekstual secara langsung ke dalam model rekomendasi sebagai fitur tambahan, memungkinkan interaksi yang lebih kaya antara pengguna, item, dan konteks dalam satu model terpadu. 
+Pada penelitian ini, CARS diimplementasikan menggunakan kombinasi pendekatan Contextual Pre-Filtering dan Contextual Modeling. Contextual Pre-Filtering digunakan untuk memfilter tempat yang tidak sesuai konteks waktu operasional dan ukuran rombongan. Contextual Modeling kemudian mengintegrasikan representasi aspek-sentimen ABSA dengan embedding konteks pengguna menggunakan pendekatan matrix factorization kontekstual. Zhang et al. (2022) telah membuktikan bahwa integrasi representasi ABSA sebagai fitur tambahan dalam collaborative filtering meningkatkan metrik NDCG@10 sebesar 8–12% dibandingkan sistem berbasis rating murni, memberikan justifikasi kuat untuk pendekatan yang dipilih dalam penelitian ini. 
+2.6 Metrik Evaluasi Sistem Rekomendasi 
+Evaluasi pada penelitian ini mencakup dua dimensi utama: evaluasi kualitas dan akurasi sistem rekomendasi dari perspektif teknis, serta evaluasi usability dan pengalaman pengguna terhadap aplikasi mobile Flutter yang dikembangkan. Kedua dimensi evaluasi ini sama pentingnya karena sebuah sistem yang secara teknis akurat namun sulit digunakan tidak akan memberikan nilai yang optimal bagi pengguna akhir (Rahmadani & Suyanto, 2023). 
+Evaluasi kualitas sistem rekomendasi menggunakan metrik berbasis ranking sebagai berikut: 
+1.	Precision@K: Mengukur proporsi item relevan di antara K rekomendasi teratas yang diberikan sistem, didefinisikan sebagai |{item relevan} ∩ {K rekomendasi teratas}| / K. Metrik ini mengukur ketepatan rekomendasi yang dihasilkan. 
+2.	Recall@K: Mengukur proporsi item relevan yang berhasil ditemukan sistem di antara K rekomendasi teratas dari seluruh item relevan yang ada, didefinisikan sebagai |{item relevan} ∩ {K rekomendasi teratas}| / |{item relevan}|. 
+3.	Normalized Discounted Cumulative Gain (NDCG@K): Metrik berbasis peringkat yang memberikan bobot lebih tinggi pada item relevan yang muncul di posisi atas daftar rekomendasi. NDCG ternormalisasi antara 0 (terburuk) hingga 1 (sempurna) sehingga dapat dibandingkan antar sistem dan dataset. 
+4.	F1-Score ABSA: Mengukur performa model ABSA pada task Aspect Term Extraction (ATE-F1) dan Aspect Sentiment Classification (ASC-F1) secara terpisah, menggunakan skema evaluasi standar SemEval yang menghitung harmonic mean antara Precision dan Recall untuk setiap kelas aspek dan sentimen. 
+Evaluasi usability aplikasi mobile Flutter dilakukan melalui: 
+1.	System Usability Scale (SUS): Kuesioner 10 item standar yang telah tervalidasi secara empiris (Nielsen, 1994), menghasilkan skor komposit 0–100 sebagai indikator tingkat kemudahan penggunaan aplikasi. Target penelitian ini adalah mencapai skor SUS minimal 70 (kategori “Good”). 
+2.	Task Completion Rate: Persentase pengguna yang berhasil menyelesaikan skenario tugas yang telah dirancang tanpa bantuan fasilitator, mengukur efektivitas fungsional aplikasi. 
+3.	Time-on-Task: Rata-rata waktu yang dibutuhkan pengguna untuk menyelesaikan skenario tugas standar, mengukur efisiensi interaksi pengguna dengan aplikasi. 
+ 	  
+BAB III
+METODOLOGI PENELITIAN
+3.1 Metodologi Pelaksanaan
+Penelitian ini menggunakan pendekatan penelitian terapan (applied research) dengan metode pengembangan sistem berbasis rekayasa perangkat lunak. Metodologi pengembangan mengadaptasi kerangka kerja Design Science Research (DSR) yang terdiri atas empat tahap utama yang dilaksanakan secara iteratif, yaitu analisis kebutuhan, desain dan perancangan, implementasi sistem, serta pengujian dan evaluasi.
+3.1.1 Analisis Kebutuhan
+Pada tahap ini dilakukan analisis kebutuhan sistem secara menyeluruh melalui studi literatur, survei lapangan terhadap pengguna potensial, serta wawancara dengan target pengguna untuk memahami permasalahan nyata dalam pencarian tempat nongkrong di Kota Padang. Pada tahap ini juga dilakukan proses pengumpulan data ulasan awal dari Google Maps melalui Google Places API sebagai basis validasi kebutuhan data.
+3.1.2 Desain dan Perancangan
+Berdasarkan kebutuhan yang telah dikumpulkan pada tahap sebelumnya, sistem mulai dirancang secara komprehensif dalam bentuk diagram UML seperti use case diagram, flowchart, sequence diagram, ERD, dan arsitektur sistem. Pada tahap ini pula dilakukan perancangan pipeline data berbasis Apache Airflow dan Apache Kafka, desain model ABSA berbasis IndoBERT, serta desain antarmuka pengguna (UI/UX) aplikasi mobile Flutter yang akan digunakan sebagai panduan pada tahap implementasi.
+3.1.3 Pembuatan Kode Program
+Pada tahap ini seluruh komponen sistem diimplementasikan secara terprogram, mencakup: (1) fine-tuning model IndoBERT untuk tugas Aspect Term Extraction (ATE) dan Aspect Sentiment Classification (ASC); (2) implementasi Automated Data Pipeline menggunakan Apache Airflow dan Apache Kafka; (3) pengembangan backend REST API menggunakan FastAPI; (4) implementasi mesin rekomendasi Context-Aware berbasis vektor aspek-sentimen; serta (5) pengembangan aplikasi mobile Flutter sebagai antarmuka pengguna akhir. Seluruh kode dikembangkan berdasarkan desain yang telah dibuat pada tahap sebelumnya.
+
+3.1.4 Pengujian
+Pengujian dilakukan secara menyeluruh untuk memastikan seluruh komponen sistem berfungsi dengan baik secara mandiri maupun terintegrasi. Tahap ini mencakup evaluasi performa model ABSA menggunakan metrik F1-Score, evaluasi kualitas sistem rekomendasi menggunakan metrik Precision@K, Recall@K, dan NDCG@K, serta pengujian usability aplikasi mobile Flutter menggunakan System Usability Scale (SUS) dan Task Completion Rate. Perbaikan bug dan peningkatan performa dilakukan berdasarkan hasil temuan pada tahap ini.
+3.2 Jadwal Pelaksanaan
+Berikut adalah jadwal pelaksanaan penelitian yang menjadi target dalam mengembangkan sistem rekomendasi tempat nongkrong di Kota Padang yang mengintegrasikan Automated Data Pipeline, Aspect-Based Sentiment Analysis (ABSA) berbasis IndoBERT, dan sistem rekomendasi Context-Aware dengan aplikasi mobile Flutter.
+
+Tabel 3.1 Jadwal Pelaksanaan
+Kegiatan	Jan	Feb	Mar	Apr	Mei	Jun
+Studi Literatur & Analisis Kebutuhan	✓					
+Pengumpulan & Anotasi Data ABSA		✓	✓			
+Perancangan Sistem (Arsitektur, Pipeline, UI/UX)		✓				
+Pengembangan Sistem (Pipeline, Model, Backend, Mobile)			✓	✓		
+Pengujian & Evaluasi (ABSA F1, Precision@K, SUS)					✓	
+Dokumentasi & Penulisan Laporan Akhir					✓	✓
+
+3.3 Analisis Kebutuhan
+3.3.1 Kebutuhan Pengguna
+Berdasarkan hasil survei lapangan dan diskusi dengan calon pengguna, sistem dibagi menjadi dua peran utama sebagai berikut:
+
+A. Pengguna (User — Pencari Tempat Nongkrong)
+•	Melihat rekomendasi tempat nongkrong yang dipersonalisasi berdasarkan konteks kunjungan tanpa harus login.
+•	Registrasi akun untuk menyimpan riwayat dan preferensi personal.
+•	Memasukkan informasi kontekstual (waktu kunjungan, tujuan kunjungan, ukuran rombongan) sebagai filter rekomendasi.
+•	Melihat detail tempat beserta ringkasan sentimen per aspek (suasana, harga, lokasi, pelayanan, fasilitas) yang dihasilkan oleh model ABSA.
+•	Menyimpan tempat favorit dan melihat riwayat pencarian.
+
+B. Admin (Pengelola Sistem)
+•	Memantau status dan kelancaran Automated Data Pipeline melalui dashboard Apache Airflow.
+•	Memantau kualitas data ulasan yang masuk dari Google Maps API.
+•	Mengelola proses pelatihan ulang (retraining) model ABSA secara berkala.
+•	Melihat statistik penggunaan sistem dan log performa komponen.
+
+3.3.2 Kebutuhan Fungsional
+Kebutuhan fungsional menjelaskan layanan utama yang harus disediakan oleh sistem:
+
+A. Automated Data Pipeline
+•	Mengumpulkan data ulasan tempat nongkrong dari Google Maps melalui Google Places API secara otomatis dan terjadwal menggunakan Apache Airflow.
+•	Memproses dan mengalirkan data ulasan baru secara near-real-time melalui Apache Kafka sebagai message broker.
+
+B. Aspek-Based Sentiment Analysis (ABSA)
+•	Mengekstrak aspek yang disebutkan dalam teks ulasan menggunakan model IndoBERT yang telah di-fine-tune (Aspect Term Extraction).
+•	Mengklasifikasikan polaritas sentimen (positif, negatif, netral) untuk setiap aspek yang terdeteksi (Aspect Sentiment Classification) pada lima kategori: suasana, harga, lokasi, pelayanan, dan fasilitas.
+
+C. Sistem Rekomendasi Context-Aware
+•	Menghasilkan rekomendasi Top-K tempat nongkrong berdasarkan kecocokan vektor aspek-sentimen tempat dengan preferensi kontekstual pengguna menggunakan weighted cosine similarity.
+•	Menyesuaikan rekomendasi berdasarkan tiga dimensi kontekstual: waktu kunjungan, tujuan kunjungan, dan ukuran rombongan.
+
+D. Autentikasi Pengguna
+•	Login dan registrasi akun pengguna dengan autentikasi berbasis JWT.
+•	Hak akses Admin berbeda dengan Pengguna biasa.
+
+E. Antarmuka Aplikasi Mobile Flutter
+•	Menampilkan rekomendasi tempat nongkrong secara real-time beserta ringkasan sentimen per aspek.
+•	Pencarian dan filter tempat berdasarkan kriteria kontekstual.
+•	Halaman detail tempat dengan visualisasi radar chart aspek-sentimen.
+•	Manajemen profil pengguna dan penyimpanan tempat favorit.
+
+3.3.3 Kebutuhan Non-Fungsional
+
+Tabel 3.2 Kebutuhan Non-Fungsional
+ID	Parameter	Kebutuhan
+NF001	Availability	Sistem harus tersedia 24/7 dan dapat diakses pengguna kapan saja, kecuali saat maintenance terjadwal.
+NF002	Reliability	Sistem harus memiliki uptime minimal 99% per bulan, dengan recovery maksimal 5 menit jika terjadi gangguan layanan.
+NF003	Ergonomy	Antarmuka aplikasi mobile Flutter harus intuitif, memudahkan pengguna menemukan rekomendasi tempat nongkrong tanpa pelatihan khusus.
+NF004	Portability	Aplikasi mobile dapat berjalan pada perangkat Android (minimum API level 21/Android 5.0 Lollipop) tanpa instalasi tambahan.
+NF005	Memory	Aplikasi mobile dapat berjalan dengan konsumsi memori maksimum 200MB pada perangkat dengan RAM ≤ 3 GB; backend API berjalan optimal dengan RAM server ≤ 8 GB.
+NF006	Response Time	Sistem harus memberikan respons rekomendasi ≤ 3 detik untuk query yang di-cache Redis, dan ≤ 8 detik untuk komputasi baru dari PostgreSQL.
+NF007	Safety	Sistem tidak menyimpan data lokasi real-time pengguna secara permanen; data kontekstual hanya digunakan pada sesi aktif.
+NF008	Security	Seluruh komunikasi antara aplikasi mobile dan backend menggunakan HTTPS/TLS. Data pengguna (email, password) dienkripsi menggunakan bcrypt dan JWT untuk autentikasi.
+NF009	Bahasa Komunikasi	Semua teks, form, notifikasi, dan interaksi dalam aplikasi mobile menggunakan Bahasa Indonesia.
+
+3.3.4 Kebutuhan Perangkat Keras
+Sistem ini merupakan aplikasi berbasis arsitektur client-server di mana seluruh komputasi berat (pipeline data, inferensi ABSA, mesin rekomendasi) dijalankan di sisi server, sementara pengguna mengakses layanan melalui aplikasi mobile Flutter. Kebutuhan perangkat keras dibagi menjadi dua sisi:
+
+A. Sisi Server
+•	Prosesor minimal 8 core: menjaga performa pipeline data, inferensi model IndoBERT, dan serving API tetap responsif secara bersamaan.
+•	RAM minimal 16 GB: mendukung pemrosesan inferensi model BERT, broker Kafka, orkestrasi Airflow, dan caching Redis secara paralel.
+•	Penyimpanan SSD minimal 200 GB: menyimpan model IndoBERT, dataset anotasi, basis data PostgreSQL, dan log pipeline.
+•	Kartu grafis (GPU) opsional dengan VRAM ≥ 8 GB: sangat direkomendasikan untuk mempercepat proses fine-tuning dan inferensi model IndoBERT.
+•	Koneksi internet stabil: memastikan pipeline dapat mengakses Google Places API secara terjadwal tanpa gangguan.
+
+B. Sisi Pengguna (Perangkat Mobile)
+•	Smartphone Android dengan versi OS minimal Android 5.0 (API level 21) dan RAM ≥ 3 GB: mendukung akses aplikasi Flutter secara lancar.
+•	Koneksi internet aktif (WiFi atau data seluler): diperlukan untuk mengambil rekomendasi secara real-time dari backend API.
+
+3.4 Perancangan Sistem
+3.4.1 Flowchart
+3.4.1.1 Flowchart Sistem
+Flowchart sistem menggambarkan arsitektur siklus data tertutup (closed-loop) yang terintegrasi antara proses latar belakang (background) dan interaksi langsung pengguna. Secara otomatis, Automated Data Pipeline yang diorkestrasi oleh Apache Airflow secara rutin mengekstrak ulasan terbaru dari Google Maps melalui Google Places API, kemudian mengalirkannya melalui Apache Kafka kepada model ABSA IndoBERT untuk dianalisis sentimennya per aspek. Hasil vektor representasi aspek-sentimen yang telah dihitung kemudian disimpan ke dalam database PostgreSQL.
+Ketika pengguna mengakses aplikasi mobile Flutter dan memasukkan kriteria pencarian beserta konteks kunjungan, backend FastAPI akan memeriksa ketersediaan data di cache Redis terlebih dahulu untuk mempercepat respons. Jika data belum tersedia di cache, sistem mengambil dari PostgreSQL, menghitung skor kesesuaian menggunakan weighted cosine similarity antara vektor aspek-sentimen tempat dan preferensi kontekstual pengguna, lalu menyajikan daftar rekomendasi Top-K kepada pengguna. Setiap interaksi pengguna dengan aplikasi (klik, simpan, abaikan) direkam sebagai sinyal umpan balik untuk melatih ulang dan meningkatkan akurasi model secara berkala melalui DAG retraining Airflow.
+ 
+
+Gambar 3.1 Flowchart Sistem
+
+3.4.1.2 Flowchart Algoritma ABSA (IndoBERT)
+Flowchart ABSA menggambarkan tahapan pemrosesan teks ulasan menjadi representasi aspek-sentimen terstruktur. Proses dimulai dari pengambilan data teks ulasan yang telah dikumpulkan oleh pipeline. Teks kemudian melewati tahap preprocessing yang mencakup pembersihan teks, tokenisasi menggunakan IndoBERT tokenizer, dan penanganan teks campuran Bahasa Indonesia dan Bahasa Minang.
+Pada tahap Aspect Term Extraction (ATE), model IndoBERT dengan lapisan token classification menggunakan skema BIO tagging mengidentifikasi term atau frasa aspek yang disebutkan secara eksplisit dalam teks. Setelah term aspek teridentifikasi, pada tahap Aspect Sentiment Classification (ASC), model IndoBERT dengan auxiliary sentence injection menentukan polaritas sentimen (positif, negatif, atau netral) untuk setiap aspek yang terdeteksi pada lima kategori: suasana/ambiance, harga/value for money, lokasi/aksesibilitas, pelayanan, dan fasilitas. Hasil agregasi sentimen per aspek membentuk vektor 10-dimensi yang merepresentasikan profil setiap tempat nongkrong dan disimpan ke dalam tabel PROFIL_TEMPAT pada PostgreSQL.
+ 
+
+Gambar 3.2 Flowchart Algoritma ABSA (IndoBERT)
+
+3.4.1.3 Flowchart Sistem Rekomendasi Context-Aware
+Flowchart ini menggambarkan alur komputasi yang mengubah preferensi kontekstual pengguna menjadi daftar rekomendasi tempat nongkrong yang terpersonalisasi. Proses diawali ketika pengguna memasukkan parameter kontekstual melalui aplikasi mobile Flutter, yaitu: waktu kunjungan (pagi, siang, malam, akhir pekan), tujuan kunjungan (kerja/belajar, hangout bersama teman, kencan, rapat bisnis), dan ukuran rombongan (sendiri, berdua, kelompok kecil 3–5 orang, kelompok besar > 5 orang).
+Sistem Backend FastAPI menerima request, kemudian memeriksa cache Redis. Jika tersedia, hasil langsung dikembalikan. Jika tidak, sistem mengambil vektor profil seluruh tempat dari PostgreSQL, mengkonversi konteks pengguna menjadi vektor bobot aspek menggunakan lookup table yang telah dikalibrasi, kemudian menghitung weighted cosine similarity antara setiap vektor tempat dengan vektor konteks pengguna. Hasil diurutkan secara menurun dan Top-K tempat dengan skor tertinggi dikembalikan sebagai rekomendasi. Hasil juga di-cache di Redis untuk mempercepat request serupa berikutnya.
+ 
+
+Gambar 3.3 Flowchart Sistem Rekomendasi Context-Aware
+
+3.4.2 Use Case Diagram
+Use Case Diagram memvisualisasikan interaksi fungsional antara tiga aktor utama pada sistem: Pengguna, Admin, dan Google Maps API (sebagai aktor eksternal). Pengguna berinteraksi melalui aplikasi mobile Flutter untuk mengelola akun (registrasi, login, kelola profil), mencari dan melihat rekomendasi tempat nongkrong berbasis konteks, melihat detail profil sentimen aspek per tempat, serta menyimpan riwayat kunjungan dan tempat favorit. Di sisi backend, Google Maps API berperan otomatis sebagai penyuplai data ulasan yang dipicu oleh DAG Airflow terjadwal, sementara Admin bertugas memantau kelancaran pipeline data, mengelola proses retraining model, serta memantau log dan statistik sistem.
+ 
+
+Gambar 3.4 Use Case Diagram
+
+3.4.3 User Scenario
+1. User Scenario Login
+
+Tabel 3.3 User Scenario Login
+Use Case Name: Login	ID: US001	Priority: High
+Actor: Pengguna, Admin
+Description: Aktor masuk ke sistem menggunakan email dan password untuk mengakses fitur sesuai peran masing-masing.
+Trigger: Aktor menekan tombol Login pada halaman autentikasi.
+Preconditions:
+1. Aktor sudah memiliki akun terdaftar di sistem.
+Normal Course:
+1. Aktor membuka halaman Login pada aplikasi Flutter.
+2. Aktor mengisi email dan password pada form yang tersedia.
+3. Sistem mengirimkan kredensial ke backend FastAPI untuk divalidasi.
+4. Jika valid, sistem menghasilkan JWT token dan mengarahkan aktor ke halaman dashboard sesuai peran.
+Postconditions:
+1. Aktor berhasil masuk ke dalam sistem dan dapat mengakses seluruh fitur sesuai perannya.
+Exceptions:
+E1: Jika email atau password salah, sistem menampilkan pesan 'Email atau password tidak valid' dan meminta pengisian ulang.
+E2: Jika server error, sistem menampilkan pesan error koneksi dan tidak dapat melanjutkan login.
+
+Pada Tabel 3.3, skenario ini menjelaskan bagaimana Admin maupun Pengguna biasa mendapatkan akses ke sistem. Tujuannya adalah memastikan identitas pengguna terverifikasi dan memberikan akses ke fitur-fitur yang sesuai dengan peran mereka, dengan keamanan berbasis JWT.
+
+2. User Scenario Register
+
+Tabel 3.4 User Scenario Register
+Use Case Name: Register	ID: US002	Priority: High
+Actor: Pengguna
+Description: Pengguna membuat akun baru untuk dapat login dan mengakses fitur rekomendasi personal.
+Trigger: Pengguna menekan tombol 'Daftar' pada halaman autentikasi.
+Preconditions:
+1. Pengguna belum memiliki akun di sistem.
+Normal Course:
+1. Pengguna mengakses halaman Register pada aplikasi Flutter.
+2. Pengguna mengisi data diri (nama, email, password, konfirmasi password).
+3. Sistem memvalidasi kelengkapan dan format data, kemudian menyimpan ke database PostgreSQL.
+4. Sistem menampilkan pesan 'Registrasi sukses' dan mengarahkan ke halaman onboarding preferensi kontekstual.
+Postconditions:
+1. Akun pengguna berhasil dibuat dan pengguna dapat langsung login ke sistem.
+Exceptions:
+E1: Jika email sudah terdaftar, sistem menampilkan pesan 'Email sudah digunakan'.
+E2: Jika koneksi internet terputus saat proses registrasi, sistem menampilkan pesan error koneksi.
+
+Pada Tabel 3.4, skenario ini menjelaskan proses pendaftaran akun baru bagi Pengguna yang ingin mengakses fitur rekomendasi personal berbasis konteks pada sistem.
+
+3. User Scenario Cari Rekomendasi Tempat Nongkrong
+
+Tabel 3.5 User Scenario Cari Rekomendasi Tempat Nongkrong
+Use Case Name: Cari Rekomendasi Tempat Nongkrong	ID: US003	Priority: High
+Actor: Pengguna
+Description: Pengguna mencari rekomendasi tempat nongkrong yang sesuai dengan konteks kunjungannya saat ini.
+Trigger: Pengguna menekan tombol 'Cari Rekomendasi' dan mengisi parameter kontekstual.
+Preconditions:
+1. Data profil sentimen tempat sudah tersedia di database PostgreSQL.
+2. Pipeline ABSA sudah berjalan minimal satu siklus pembaruan data.
+Normal Course:
+1. Pengguna membuka halaman utama aplikasi Flutter.
+2. Pengguna memilih parameter kontekstual: waktu kunjungan, tujuan kunjungan, dan ukuran rombongan.
+3. Sistem mengirimkan permintaan ke backend FastAPI dengan parameter konteks.
+4. Backend memeriksa cache Redis; jika tersedia, langsung kembalikan hasil; jika tidak, hitung skor cosine similarity dari PostgreSQL.
+5. Sistem menampilkan daftar Top-K rekomendasi tempat beserta ringkasan sentimen per aspek.
+Postconditions:
+1. Pengguna mendapatkan daftar rekomendasi tempat nongkrong yang relevan sesuai konteks kunjungan.
+2. Setiap tempat ditampilkan dengan skor relevansi dan ringkasan sentimen lima aspek.
+Exceptions:
+E1: Jika tidak ada tempat yang memenuhi ambang skor minimum, sistem menampilkan pesan 'Tidak ada rekomendasi tersedia untuk konteks ini'.
+E2: Jika sistem gagal mengambil data dari server, ditampilkan pesan error koneksi.
+
+Pada Tabel 3.5, skenario ini merupakan use case inti sistem yang menggambarkan bagaimana Pengguna mendapatkan rekomendasi tempat nongkrong yang dipersonalisasi melalui integrasi ABSA dan sistem rekomendasi Context-Aware.
+
+4. User Scenario Lihat Detail Sentimen Tempat
+
+Tabel 3.6 User Scenario Lihat Detail Sentimen Tempat
+Use Case Name: Lihat Detail Sentimen Tempat	ID: US004	Priority: High
+Actor: Pengguna
+Description: Pengguna dapat melihat profil sentimen per aspek dari sebuah tempat nongkrong secara detail.
+Trigger: Pengguna mengetuk kartu rekomendasi atau hasil pencarian tempat tertentu.
+Preconditions:
+1. Tempat yang dipilih memiliki data profil sentimen yang sudah dihitung oleh pipeline ABSA.
+Normal Course:
+1. Pengguna memilih tempat dari daftar rekomendasi atau hasil pencarian.
+2. Sistem mengambil detail metadata tempat dan vektor sentimen dari PostgreSQL.
+3. Sistem menampilkan halaman detail yang mencakup: informasi tempat, visualisasi radar chart lima aspek sentimen, dan cuplikan ulasan representatif per aspek.
+4. Pengguna dapat mengklik aspek tertentu untuk melihat ulasan spesifik yang mendukung sentimen tersebut.
+Postconditions:
+1. Pengguna mendapatkan informasi granular mengenai keunggulan dan kelemahan tempat pada setiap aspek.
+2. Pengguna dapat membuat keputusan kunjungan yang lebih informatif berdasarkan profil sentimen.
+Exceptions:
+E1: Jika data sentimen tempat belum tersedia (belum diproses pipeline), sistem menampilkan notifikasi 'Analisis sentimen belum tersedia untuk tempat ini'.
+E2: Jika sistem gagal memuat data dari server, ditampilkan pesan error.
+
+Pada Tabel 3.6, skenario ini menjelaskan bagaimana Pengguna dapat memanfaatkan hasil ABSA secara langsung untuk mendapatkan gambaran mendalam mengenai kualitas setiap aspek tempat nongkrong yang diminati.
+
+5. User Scenario Pantau Pipeline (Admin)
+
+Tabel 3.7 User Scenario Pantau Pipeline
+Use Case Name: Pantau Status Pipeline	ID: US005	Priority: High
+Actor: Admin
+Description: Admin memantau status eksekusi Automated Data Pipeline dan mengelola proses retraining model ABSA.
+Trigger: Admin memilih menu 'Monitoring Pipeline' pada dashboard admin.
+Preconditions:
+1. Admin telah login ke dalam sistem dengan hak akses admin.
+Normal Course:
+1. Admin membuka halaman monitoring pipeline.
+2. Sistem menampilkan daftar DAG Airflow beserta status eksekusi terbaru (success, running, failed).
+3. Admin dapat melihat log detail setiap task dalam DAG yang dipilih.
+4. Jika terdapat DAG gagal, Admin dapat memicu eksekusi ulang (trigger re-run) langsung dari antarmuka.
+5. Admin dapat memicu proses retraining model ABSA secara manual jika diperlukan.
+Postconditions:
+1. Admin memiliki visibilitas penuh terhadap status pipeline data dan dapat melakukan intervensi jika diperlukan.
+2. Data ulasan terus diperbarui secara berkelanjutan tanpa gangguan layanan.
+Exceptions:
+E1: Jika Apache Airflow service tidak dapat diakses, sistem menampilkan pesan error koneksi ke server orkestrasi.
+E2: Jika retraining model gagal, sistem mengirimkan notifikasi alert ke Admin.
+
+Pada Tabel 3.7, skenario ini menjelaskan bagaimana Admin menjaga keandalan dan keberlangsungan Automated Data Pipeline yang menjadi fondasi pembaruan data rekomendasi secara berkelanjutan.
+
+6. User Scenario Statistik & Analisis Performa Sistem
+
+Tabel 3.8 User Scenario Statistik Performa Sistem
+Use Case Name: Statistik Performa Sistem	ID: US006	Priority: Medium
+Actor: Admin
+Description: Admin dapat melihat statistik penggunaan sistem dan metrik performa model ABSA serta mesin rekomendasi.
+Trigger: Admin memilih menu 'Statistik Sistem' pada dashboard admin.
+Preconditions:
+1. Admin telah login ke dalam sistem.
+Normal Course:
+1. Sistem menampilkan grafik jumlah ulasan yang telah diproses oleh pipeline per periode waktu.
+2. Sistem menampilkan metrik evaluasi model ABSA terkini (F1-Score ATE, F1-Score ASC).
+3. Sistem menampilkan statistik penggunaan aplikasi mobile (jumlah request rekomendasi, rata-rata latensi respons API).
+4. Admin dapat mengekspor laporan statistik dalam format yang diinginkan.
+Postconditions:
+1. Admin mendapatkan gambaran komprehensif mengenai kualitas dan performa sistem secara keseluruhan.
+Exceptions:
+E1: Jika sistem gagal memuat data statistik dari server, ditampilkan pesan error.
+
+Pada Tabel 3.8, skenario ini memberikan Admin kemampuan untuk memantau kualitas keseluruhan sistem, termasuk performa model ABSA dan efisiensi mesin rekomendasi, sehingga keputusan mengenai retraining atau penyesuaian sistem dapat dilakukan berbasis data.
+
+7. User Scenario Kelola Profil Pengguna
+
+Tabel 3.9 User Scenario Kelola Profil Pengguna
+Use Case Name: Kelola Profil Pengguna	ID: US007	Priority: Medium
+Actor: Pengguna
+Description: Pengguna memperbarui data profil dan preferensi kontekstual defaultnya.
+Trigger: Pengguna memilih menu 'Profil' pada navigasi bawah aplikasi Flutter.
+Preconditions:
+1. Pengguna telah login ke dalam sistem.
+Normal Course:
+1. Pengguna membuka halaman Profil.
+2. Sistem menampilkan data profil pengguna saat ini (nama, email, preferensi konteks default).
+3. Pengguna mengubah data yang diinginkan dan menekan tombol 'Simpan Perubahan'.
+4. Sistem memvalidasi perubahan data dan menyimpan ke database PostgreSQL.
+5. Sistem menampilkan notifikasi 'Profil berhasil diperbarui'.
+Postconditions:
+1. Data profil pengguna berhasil diperbarui.
+2. Preferensi konteks default baru akan digunakan sebagai nilai awal pada pencarian rekomendasi berikutnya.
+Exceptions:
+E1: Jika format data tidak valid (misalnya email tidak valid), sistem menampilkan pesan error validasi.
+E2: Jika koneksi terputus, sistem menampilkan pesan error dan perubahan tidak tersimpan.
+
+Pada Tabel 3.9, skenario ini memungkinkan Pengguna untuk menjaga relevansi preferensi kontekstual defaultnya sesuai perkembangan kebiasaan dan kebutuhan kunjungan mereka.
+
+8. User Scenario Simpan & Kelola Tempat Favorit
+
+Tabel 3.10 User Scenario Simpan & Kelola Tempat Favorit
+Use Case Name: Simpan & Kelola Tempat Favorit	ID: US008	Priority: Medium
+Actor: Pengguna
+Description: Pengguna menyimpan tempat nongkrong yang disukai ke daftar favorit untuk akses mudah di kemudian hari.
+Trigger: Pengguna menekan ikon bookmark/favorit pada halaman detail atau kartu rekomendasi tempat.
+Preconditions:
+1. Pengguna telah login ke dalam sistem.
+2. Data tempat tersedia di database sistem.
+Normal Course:
+1. Pengguna menekan ikon bookmark pada tempat yang ingin disimpan.
+2. Sistem menyimpan relasi favorit antara Pengguna dan tempat ke database PostgreSQL.
+3. Sistem menampilkan konfirmasi 'Tempat berhasil ditambahkan ke favorit'.
+4. Pengguna dapat mengakses daftar seluruh tempat favorit melalui menu 'Favorit' di aplikasi.
+5. Pengguna dapat menghapus tempat dari daftar favorit dengan menekan ikon bookmark yang aktif.
+Postconditions:
+1. Tempat tersimpan dalam daftar favorit pengguna dan dapat diakses kembali kapan saja.
+2. Data interaksi bookmark dicatat sebagai sinyal umpan balik positif untuk sistem rekomendasi.
+Exceptions:
+E1: Jika koneksi internet tidak tersedia, aksi bookmark gagal disimpan ke server dan ditampilkan pesan error.
+
+Pada Tabel 3.10, skenario ini mendukung akumulasi sinyal umpan balik implisit dari perilaku pengguna yang akan digunakan oleh mekanisme feedback loop untuk meningkatkan akurasi model rekomendasi secara periodik melalui proses retraining terjadwal Airflow.
+
+
+
+
+
+3.4.4 Activity Diagram
+1. Activity Diagram Login
+ 
+
+Gambar 3.5 Activity Diagram Login
+Pada Gambar 3.5, Pengguna atau Admin mengisi email dan password, sistem mengirimkan kredensial ke backend FastAPI yang memvalidasi terhadap database PostgreSQL. Jika valid, JWT token dihasilkan dan pengguna diarahkan ke halaman dashboard sesuai peran; jika tidak valid, sistem menampilkan pesan error dan meminta pengisian ulang.
+
+2. Activity Diagram Register
+ 
+
+Gambar 3.6 Activity Diagram Register
+Pada Gambar 3.6, Pengguna baru mengisi form registrasi, sistem memvalidasi data dan memeriksa keunikan email. Jika valid, data diinsert ke tabel USERS pada PostgreSQL, pengguna diarahkan ke halaman onboarding preferensi kontekstual. Jika tidak valid, pengguna diminta mengisi ulang form.
+
+3. Activity Diagram Cari Rekomendasi Tempat Nongkrong
+ 
+
+Gambar 3.7 Activity Diagram Cari Rekomendasi Tempat Nongkrong
+Pada Gambar 3.7, Pengguna memilih parameter kontekstual (waktu, tujuan, ukuran rombongan) melalui antarmuka Flutter. Backend FastAPI menerima request dan memeriksa cache Redis. Jika hit, hasil dikembalikan langsung. Jika miss, sistem mengambil vektor profil tempat dari PostgreSQL, menghitung weighted cosine similarity, mengurutkan hasil, dan mengembalikan Top-K rekomendasi kepada Pengguna.
+
+4. Activity Diagram Lihat Detail Sentimen Tempat
+ 
+
+Gambar 3.8 Activity Diagram Lihat Detail Sentimen Tempat
+Pada Gambar 3.8, Pengguna memilih tempat dari daftar rekomendasi. Sistem mengambil detail metadata dan vektor aspek-sentimen dari PostgreSQL. Sistem merender halaman detail dengan visualisasi radar chart dan cuplikan ulasan per aspek yang mendukung sentimen tersebut.
+
+5. Activity Diagram Automated Data Pipeline (Airflow DAG)
+ 
+
+Gambar 3.9 Activity Diagram Automated Data Pipeline (Airflow DAG)
+Pada Gambar 3.9, DAG Airflow yang terjadwal setiap 24 jam memulai proses dengan memanggil Google Places API untuk mengambil ulasan terbaru. Data dikirimkan ke topik Kafka untuk diproses secara near-real-time. Consumer Kafka melakukan preprocessing teks, lalu meneruskan ke inferensi model ABSA IndoBERT. Hasil ekstraksi aspek-sentimen disimpan ke PostgreSQL dan vektor profil tempat diperbarui.
+
+6. Activity Diagram ABSA (Aspect Term Extraction & Classification)
+ 
+
+Gambar 3.10 Activity Diagram ABSA (ATE & ASC)
+Pada Gambar 3.10, teks ulasan diterima dari consumer Kafka. Model ATE IndoBERT memproses token untuk mengidentifikasi term aspek menggunakan BIO tagging. Untuk setiap term aspek yang terdeteksi, model ASC IndoBERT dengan auxiliary sentence memprediksi polaritas sentimen. Hasil triplet (aspek_term, kategori_aspek, polaritas) disimpan ke tabel ASPEK_SENTIMEN dan digunakan untuk memperbarui PROFIL_TEMPAT.
+
+7. Activity Diagram Kelola Profil Pengguna
+ 
+
+Gambar 3.11 Activity Diagram Kelola Profil Pengguna
+Pada Gambar 3.11, Pengguna yang telah login membuka halaman Profil. Sistem mengambil data profil dari PostgreSQL dan menampilkannya. Pengguna mengubah data yang diinginkan, sistem memvalidasi, dan jika valid melakukan update ke database disertai notifikasi sukses. Jika tidak valid, pengguna diminta mengisi ulang form.
+
+8. Activity Diagram Pantau Pipeline (Admin)
+ 
+
+Gambar 3.12 Activity Diagram Pantau Pipeline (Admin)
+Pada Gambar 3.12, Admin yang telah login membuka halaman monitoring pipeline. Sistem mengambil status terkini seluruh DAG Airflow melalui Airflow REST API dan menampilkannya. Jika terdapat DAG dengan status failed, Admin dapat memilih DAG tersebut dan memicu eksekusi ulang melalui antarmuka. Sistem merekam aksi Admin dan menampilkan konfirmasi.
+
+3.4.5 Sequence Diagram
+1. Sequence Diagram Login
+ 
+
+Gambar 3.13 Sequence Diagram Login
+Pada Gambar 3.13, Sequence Diagram ini berfokus pada alur autentikasi pengguna. Pengguna mengirimkan kredensial melalui form Flutter ke AuthController, yang meneruskan ke User repository untuk validasi terhadap database PostgreSQL. Jika valid, JWT token dihasilkan dan dikembalikan ke aplikasi.
+
+
+
+
+
+2. Sequence Diagram Register
+ 
+
+Gambar 3.14 Sequence Diagram Register
+Pada Gambar 3.14, Sequence Diagram ini berfokus pada proses pendaftaran akun baru. Pengguna mengisi form registrasi, data dikirim ke RegisterController yang memvalidasi dan menyimpan data baru ke tabel USERS pada PostgreSQL, kemudian menampilkan halaman onboarding preferensi.
+
+3. Sequence Diagram Cari Rekomendasi Tempat Nongkrong
+ 
+
+Gambar 3.15 Sequence Diagram Cari Rekomendasi Tempat Nongkrong
+Pada Gambar 3.15, Sequence Diagram ini merupakan alur inti sistem. Aplikasi Flutter mengirimkan request dengan parameter konteks ke RecommendationController. Controller memeriksa Redis cache; jika hit, langsung kembalikan. Jika miss, mengambil vektor profil tempat dari PostgreSQL, memanggil RecommendationEngine untuk komputasi weighted cosine similarity, menyimpan hasil ke Redis, dan mengembalikan Top-K rekomendasi ke Flutter.
+
+4. Sequence Diagram Lihat Detail Sentimen Tempat
+ 
+
+Gambar 3.16 Sequence Diagram Lihat Detail Sentimen Tempat
+Pada Gambar 3.16, Sequence Diagram ini menggambarkan alur pengambilan detail profil sentimen tempat. Aplikasi Flutter mengirimkan id_tempat ke PlaceDetailController, yang mengambil metadata tempat dan vektor sentimen dari PlaceRepository (PostgreSQL), serta cuplikan ulasan per aspek, kemudian menyajikan data ke Flutter untuk dirender sebagai radar chart dan daftar ulasan.
+
+
+5. Sequence Diagram Automated Data Pipeline (Airflow Trigger)
+ 
+
+Gambar 3.17 Sequence Diagram Automated Data Pipeline
+Pada Gambar 3.17, Sequence Diagram ini menggambarkan interaksi antar komponen pipeline. Airflow Scheduler memicu DAG, yang memanggil Google Places API untuk mengambil ulasan. Data dimasukkan ke Kafka Producer dan dikirim ke Kafka Topic. Consumer ABSA mengambil pesan, melakukan preprocessing, menginferensi model IndoBERT, dan menyimpan hasil ke PostgreSQL melalui Repository.
+
+6. Sequence Diagram ABSA Inference
+ 
+
+Gambar 3.18 Sequence Diagram ABSA Inference (IndoBERT)
+Pada Gambar 3.18, Sequence Diagram ini berfokus pada proses inferensi ABSA. ABSAService menerima teks ulasan dari Kafka Consumer, memanggil ATEModel (IndoBERT BIO tagging) untuk ekstraksi term aspek, kemudian untuk setiap term memanggil ASCModel (IndoBERT auxiliary sentence) untuk klasifikasi polaritas, lalu menyimpan hasil triplet ke ABSASentimentRepository (PostgreSQL).
+
+7. Sequence Diagram Kelola Profil Pengguna
+ 
+
+Gambar 3.19 Sequence Diagram Kelola Profil Pengguna
+Pada Gambar 3.19, Sequence Diagram ini berfokus pada proses pembaruan data profil. Pengguna mengubah data melalui HalamanProfil pada Flutter, data dikirim ke ProfileController yang melakukan validasi melalui ProfileService, kemudian menyimpan perubahan menggunakan UPDATE ke UserRepository (PostgreSQL), dan mengembalikan konfirmasi sukses ke halaman profil.
+
+8. Sequence Diagram Pantau Pipeline (Admin)
+ 
+
+Gambar 3.20 Sequence Diagram Pantau Pipeline (Admin)
+Pada Gambar 3.20, Sequence Diagram ini berfokus pada interaksi Admin dengan sistem monitoring. Admin mengakses halaman monitoring, AdminController memanggil Airflow REST API untuk mengambil status seluruh DAG terkini, menampilkan hasilnya ke antarmuka. Jika Admin memicu re-run DAG, permintaan diteruskan ke Airflow API dan konfirmasi dikembalikan ke halaman monitoring.
+
+9. Sequence Diagram Simpan Tempat Favorit
+ 
+
+Gambar 3.21 Sequence Diagram Simpan Tempat Favorit
+Pada Gambar 3.21, Sequence Diagram ini berfokus pada proses penyimpanan tempat favorit beserta pencatatan sinyal umpan balik. Pengguna menekan tombol bookmark, Flutter mengirimkan request ke FavoriteController yang menyimpan relasi ke tabel INTERAKSI (sebagai sinyal bookmark positif) dan tabel favorit pada PostgreSQL, serta mengembalikan konfirmasi ke Flutter.
+
+10. Sequence Diagram Statistik Performa Sistem (Admin)
+ 
+
+Gambar 3.22 Sequence Diagram Statistik Performa Sistem (Admin)
+Pada Gambar 3.22, Sequence Diagram ini berfokus pada pengambilan data statistik performa. Admin mengakses halaman statistik, StatisticsController mengambil data metrik evaluasi model ABSA (F1-Score) dari ModelMetricsRepository, data statistik penggunaan pipeline dari PipelineLogRepository, serta data latensi API dari APIMetricsRepository pada PostgreSQL, kemudian menyajikan seluruh data dalam bentuk grafik dan tabel di antarmuka admin.
+
+
+3.4.6 Class Diagram
+
+ 
+
+Gambar 3.23 Class Diagram
+Pada Gambar 3.23, Class Diagram mendemonstrasikan arsitektur sistem yang terstruktur mengikuti pola Entity-Control-Boundary (ECB) dengan pemisahan peran yang jelas. Boundary classes (seperti HalamanUtama, HalamanDetail, FormPencarian, HalamanProfil pada sisi Flutter) mengelola interaksi pengguna dan dikelola oleh Control classes (seperti AuthController, RecommendationController, PlaceDetailController, ProfileController, AdminController). Control classes mengakses Entity classes (User, Tempat, Ulasan, AspekSentimen, ProfilTempat, Interaksi) melalui lapisan Repository yang berkomunikasi dengan database PostgreSQL dan cache Redis.
+Komponen khusus yang menonjol adalah ABSAService yang mengorkestrasikan dua model IndoBERT secara sekuensial (ATEModel dan ASCModel), serta RecommendationEngine yang mengimplementasikan algoritma weighted cosine similarity. Seluruh proses pipeline data dikelola oleh AirflowDAGManager dan KafkaConsumerService yang beroperasi secara asinkron di latar belakang dan tidak memiliki ketergantungan langsung dengan lapisan Boundary, menjamin pemisahan concerns yang bersih antara proses batch background dan interaksi real-time pengguna.
+
+3.4.7 Entity Relationship Diagram (ERD)
+ 
+
+Gambar 3.24 Entity Relationship Diagram (ERD)
+Entity Relationship Diagram pada Gambar 3.24 menggambarkan skema basis data PostgreSQL yang menjadi tulang punggung penyimpanan data sistem. Struktur entitas dan relasinya dirancang untuk mendukung kebutuhan pipeline ABSA, mesin rekomendasi Context-Aware, dan fitur-fitur aplikasi mobile Flutter secara efisien. Deskripsi ringkas setiap entitas beserta atribut utamanya disajikan pada Tabel 3.11 berikut.
+
+Tabel 3.11 Entitas Utama ERD dan Deskripsinya
+Entitas	Atribut Utama	PK/FK	Keterangan
+USERS	id_user, nama, email, password, preferensi_konteks	PK: id_user	Menyimpan data akun dan preferensi kontekstual pengguna
+TEMPAT	id_tempat, nama_tempat, alamat, koordinat, kategori, rating_google	PK: id_tempat	Menyimpan metadata tempat nongkrong dari Google Maps
+ULASAN	id_ulasan, id_tempat, teks_ulasan, rating, timestamp	PK: id_ulasan, FK: id_tempat	Menyimpan data ulasan mentah dari Google Places API
+ASPEK_SENTIMEN	id_aspek, id_ulasan, kategori_aspek, polaritas, skor_confidence	PK: id_aspek, FK: id_ulasan	Menyimpan hasil ekstraksi ABSA per aspek per ulasan
+PROFIL_TEMPAT	id_profil, id_tempat, vektor_sentimen (10-dim), updated_at	PK: id_profil, FK: id_tempat	Menyimpan vektor representasi aspek-sentimen agregat setiap tempat
+INTERAKSI	id_interaksi, id_user, id_tempat, tipe_aksi, konteks_sesi, timestamp	PK: id_interaksi, FK: id_user, id_tempat	Merekam sinyal implisit interaksi pengguna untuk feedback loop retraining
+
+Entitas USERS berelasi one-to-many dengan INTERAKSI (satu pengguna dapat memiliki banyak interaksi). Entitas TEMPAT berelasi one-to-many dengan ULASAN (satu tempat memiliki banyak ulasan), one-to-many dengan ASPEK_SENTIMEN (melalui ULASAN sebagai perantara), serta one-to-one dengan PROFIL_TEMPAT yang menyimpan vektor representasi agregat. Entitas INTERAKSI merekam sinyal umpan balik implisit dari pengguna yang akan dimanfaatkan untuk proses retraining model rekomendasi secara periodik.
+
+3.4.8 Antarmuka Pengguna (User Interface)
+3.4.8.1 Tampilan Onboarding & Landing
+ 
+
+Gambar 3.25 Wireframe Halaman Onboarding/Landing
+
+3.4.8.2 Tampilan Login & Register
+ 
+
+Gambar 3.26 Wireframe Halaman Login & Register
+
+3.4.8.3 Tampilan Halaman Utama (Home) — Rekomendasi Kontekstual
+ 
+
+Gambar 3.27 Wireframe Halaman Utama (Rekomendasi Kontekstual)
+
+3.4.8.4 Tampilan Pencarian & Filter Kontekstual
+ 
+
+Gambar 3.28 Wireframe Pencarian & Filter Kontekstual
+
+3.4.8.5 Tampilan Detail Tempat & Profil Sentimen Aspek
+ 
+
+Gambar 3.29 Wireframe Detail Tempat & Profil Sentimen Aspek (Radar Chart)
+
+3.4.8.6 Tampilan Profil Pengguna
+ 
+
+Gambar 3.30 Wireframe Halaman Profil Pengguna
+
+3.4.8.7 Tampilan Daftar Favorit
+ 
+
+Gambar 3.31 Wireframe Halaman Daftar Favorit
+
+3.4.8.8 Tampilan Dashboard Admin — Monitoring Pipeline
+ 
+
+Gambar 3.32 Wireframe Dashboard Admin (Monitoring Pipeline)
+
+3.4.8.9 Tampilan Dashboard Admin — Statistik Performa Sistem
+ 
+
+Gambar 3.33 Wireframe Dashboard Admin (Statistik Performa Sistem & Metrik ABSA)
+
+3.5 Perancangan Arsitektur Sistem
+3.5.1 Arsitektur Sistem Keseluruhan
+Sistem yang dikembangkan terdiri dari empat lapisan utama yang terintegrasi secara vertikal dalam sebuah arsitektur microservices terkontainerisasi menggunakan Docker:
+•	Data Collection Layer: Antarmuka terhadap Google Maps Places API yang dikelola oleh skrip scraping terjadwal dalam DAG Airflow. Lapisan ini bertanggung jawab atas pengambilan ulasan, metadata tempat, dan rating secara periodik.
+•	Data Pipeline Layer: Mencakup Apache Kafka sebagai message broker untuk buffering dan streaming data ulasan, serta Apache Airflow sebagai orkestrator tiga DAG utama (scraping harian, retraining mingguan, dan pembaruan profil tempat).
+•	Processing & Inference Layer: Mencakup preprocessing NLP, model ABSA IndoBERT (ATE + ASC), mesin rekomendasi Context-Aware berbasis weighted cosine similarity, FastAPI sebagai REST API backend, serta Redis sebagai cache layer.
+•	Presentation Layer: Aplikasi mobile Flutter sebagai satu-satunya antarmuka pengguna akhir (Pengguna dan Admin), dibangun dengan arsitektur Clean Architecture menggunakan pola Bloc/Cubit untuk state management.
+
+3.5.2 Desain Automated Data Pipeline
+Pipeline data dirancang dengan dua jalur pemrosesan yang saling melengkapi. Jalur batch diimplementasikan sebagai tiga DAG Airflow terpisah: (1) DAG scraping harian yang dijadwalkan setiap pukul 02.00 WIB untuk mengambil ulasan terbaru dari Google Places API; (2) DAG retraining model mingguan yang menggunakan data anotasi baru yang terakumulasi selama seminggu; dan (3) DAG pembaruan profil tempat yang memperbarui vektor aspek-sentimen seluruh tempat setelah model diperbarui. Jalur streaming berbasis Kafka memungkinkan pemrosesan ulasan yang masuk segera dianalisis sentimennya tanpa menunggu jadwal batch berikutnya, sehingga profil sentimen tempat dapat diperbarui lebih responsif.
+
+3.5.3 Desain Model ABSA (IndoBERT)
+Model ABSA diimplementasikan menggunakan pendekatan pipeline dua tahap berbasis IndoBERT. Tahap Aspect Term Extraction (ATE) menggunakan arsitektur IndoBERT-base dengan lapisan token classification tambahan di atasnya, dilatih menggunakan skema BIO (Beginning, Inside, Outside) tagging untuk mengidentifikasi batas term aspek dalam teks. Tahap Aspect Sentiment Classification (ASC) menggunakan arsitektur IndoBERT-base dengan auxiliary sentence injection — setiap sample input dikonstruksi sebagai pasangan [teks ulasan; pertanyaan aspek], sehingga model dapat fokus pada aspek tertentu secara eksplisit. Konfigurasi fine-tuning yang digunakan: learning rate 2e-5, batch size 32, maksimal 5 epoch dengan early stopping berdasarkan validation F1-Score, dan weight decay 0,01.
+
+3.5.4 Desain Mesin Rekomendasi Context-Aware
+Mesin rekomendasi mengimplementasikan pendekatan hybrid yang menggabungkan content-based filtering berbasis representasi aspek-sentimen ABSA dengan contextual filtering. Setiap tempat nongkrong direpresentasikan sebagai vektor 10 dimensi v_tempat = [s_suasana_pos, s_suasana_neg, s_harga_pos, s_harga_neg, s_lokasi_pos, s_lokasi_neg, s_pelayanan_pos, s_pelayanan_neg, s_fasilitas_pos, s_fasilitas_neg] yang merupakan skor sentimen rata-rata positif dan negatif untuk setiap lima aspek. Konteks pengguna dikodekan menggunakan lookup table kontekstual menjadi vektor bobot preferensi w_konteks = [w1, ..., w10] yang merepresentasikan kepentingan relatif setiap dimensi sentimen dalam konteks tertentu. Skor relevansi dihitung sebagai weighted cosine similarity antara v_tempat dan w_konteks, kemudian K tempat dengan skor tertinggi direkomendasikan.
+
+3.6 Implementasi Sistem
+3.6.1 Stack Teknologi
+Pemilihan stack teknologi dalam penelitian ini didasarkan pada pertimbangan kematangan teknologi, ketersediaan dokumentasi dan komunitas, serta kesesuaian dengan kebutuhan fungsional sistem.
+
+Tabel 3.12 Stack Teknologi Sistem
+Komponen	Teknologi	Versi	Justifikasi
+Orkestrasi Pipeline	Apache Airflow	2.8+	Standar industri untuk workflow orchestration, UI monitoring lengkap, mendukung Python DAG
+Message Broker	Apache Kafka	3.6+	High-throughput, fault-tolerant streaming untuk skalabilitas pemrosesan ulasan near-real-time
+Model NLP	IndoBERT via HuggingFace	v1.0	State-of-the-art untuk NLP Bahasa Indonesia, mendukung fine-tuning domain spesifik
+ML Framework	PyTorch + Transformers	2.1+/4.36+	Ekosistem penelitian ML terdepan untuk fine-tuning BERT dengan dokumentasi lengkap
+Backend API	FastAPI (Python)	0.104+	Async-native, auto-dokumentasi OpenAPI, performa tinggi untuk serving model ML
+Database Utama	PostgreSQL	16+	ACID compliance, dukungan JSON/JSONB dan pgvector untuk penyimpanan vektor sentimen
+Cache Layer	Redis	7+	In-memory cache untuk latensi rendah pada API response rekomendasi berulang
+Aplikasi Mobile	Flutter (Dart)	3.16+	Cross-platform Android/iOS dari satu basis kode, widget yang kaya dan performa mendekati native
+Containerisasi	Docker + Compose	24+	Portabilitas deployment, isolasi dependensi antar komponen sistem
+
+3.6.2 Pengembangan Aplikasi Mobile Flutter
+Aplikasi mobile dikembangkan menggunakan Flutter dengan arsitektur Clean Architecture yang memisahkan kode menjadi tiga lapisan: Presentation Layer (widget dan state management menggunakan Bloc/Cubit), Domain Layer (business logic dan use cases), serta Data Layer (repository implementation dan data sources menggunakan HTTP client Dio). Fitur utama aplikasi meliputi: (1) alur onboarding untuk pengaturan preferensi kontekstual default; (2) halaman utama dengan card rekomendasi kontekstual yang dapat diperbarui secara real-time; (3) halaman detail tempat dengan visualisasi radar chart sentimen per aspek dan daftar ulasan representatif; (4) fitur pencarian dengan filter kontekstual interaktif; (5) manajemen bookmark dan riwayat kunjungan; serta (6) dashboard monitoring pipeline untuk Admin.
+
+
+
+3.7 Pengujian dan Evaluasi
+3.7.1 Pengujian Performa Model ABSA
+Evaluasi model ABSA dilakukan secara terpisah untuk setiap subtask menggunakan dataset test set yang telah disisihkan sejak awal (15% dari total dataset anotasi) dan tidak pernah digunakan dalam proses pelatihan maupun tuning. Metrik utama yang digunakan adalah Macro-F1 Score untuk Aspect Term Extraction (ATE-F1) dan Aspect Sentiment Classification (ASC-F1). Pemilihan Macro-F1 atas Micro-F1 didasarkan pada pertimbangan bahwa performa yang seimbang di seluruh kelas aspek dan polaritas lebih penting daripada performa rata-rata yang mungkin didominasi oleh kelas mayoritas. Target minimum yang ditetapkan adalah ASC-F1 ≥ 80%, mengacu pada benchmark Rahmadani dan Suyanto (2023) yang mencapai 82,3% pada domain serupa. Analisis error juga dilakukan secara kualitatif untuk mengidentifikasi pola kesalahan sistematis, terutama pada ulasan yang mengandung sarkasme atau campuran Bahasa Minang.
+
+3.7.2 Pengujian Performa Sistem Rekomendasi
+Evaluasi sistem rekomendasi dilakukan menggunakan protokol leave-one-out cross-validation pada data interaksi historis pengguna. Nilai K yang digunakan adalah K = {5, 10, 20} untuk Precision@K, Recall@K, dan NDCG@K. Perbandingan dilakukan antara sistem Context-Aware yang dikembangkan dengan dua baseline: (1) sistem rekomendasi berbasis popularitas (most-visited places); dan (2) sistem content-based filtering tanpa integrasi konteks. Peningkatan NDCG@10 yang diharapkan adalah minimal 8% dibandingkan sistem tanpa konteks, mengacu pada Zhang et al. (2022).
+
+3.7.3 Pengujian Usability Aplikasi Mobile
+Pengujian usability dilakukan melalui user study dengan melibatkan 20 partisipan yang dipilih secara purposive sampling untuk merepresentasikan target pengguna utama: mahasiswa dan young professional berusia 18–30 tahun yang tinggal atau beraktivitas di Kota Padang. Prosedur pengujian mengikuti protokol think-aloud terstruktur dalam tiga sesi: (1) sesi pengenalan aplikasi selama 5 menit; (2) sesi skenario tugas selama 20 menit yang mencakup 5 task utama (pencarian rekomendasi, melihat detail sentimen, menyimpan favorit, mengubah konteks pencarian, dan melihat riwayat); dan (3) sesi pengisian kuesioner SUS selama 5 menit. Target skor SUS yang ditetapkan adalah minimal 70 (kategori Good), dan Task Completion Rate minimal 80%.
+
+3.8 Jadwal Penelitian
+Penelitian ini direncanakan berlangsung selama enam bulan, dimulai dari bulan Januari 2026 hingga Juni 2026, dengan distribusi aktivitas sebagaimana telah dijelaskan pada Tabel 3.1.
+
+3.9 Kerangka Konseptual Penelitian
+Secara konseptual, penelitian ini membangun sebuah sistem yang beroperasi dalam siklus data tertutup (closed-loop data cycle) di mana output dari setiap komponen menjadi input bagi komponen berikutnya. Automated Data Pipeline yang diorkestrasi oleh Apache Airflow secara berkelanjutan mengumpulkan ulasan terbaru dari Google Maps melalui Google Places API, kemudian mengalirkannya melalui Apache Kafka kepada model ABSA IndoBERT yang mengekstrak representasi aspek-sentimen terstruktur dari teks ulasan yang tidak terstruktur. Representasi aspek-sentimen ini kemudian menjadi input utama bagi mesin rekomendasi Context-Aware yang menggabungkannya dengan profil kontekstual pengguna menggunakan algoritma weighted cosine similarity untuk menghasilkan rekomendasi yang personal dan relevan.
+Siklus ini ditutup oleh mekanisme umpan balik (feedback loop) dari interaksi pengguna dengan aplikasi Flutter: ketika pengguna mengklik, menyimpan, atau mengabaikan rekomendasi, sinyal implisit ini dicatat di tabel INTERAKSI pada PostgreSQL dan digunakan untuk memperbaiki model rekomendasi melalui proses retraining periodik yang dijadwalkan oleh Airflow. Mekanisme feedback loop ini memastikan bahwa sistem semakin akurat dan personal seiring berjalannya waktu, menciptakan efek flywheel yang meningkatkan nilai sistem secara berkelanjutan dan menjadikannya semakin relevan bagi pengguna di Kota Padang.
+
+ 	  
+DAFTAR PUSTAKA 
+Adomavicius, G., & Tuzhilin, A. (2015). Context-aware recommender systems. Dalam F. Ricci, L. Rokach, B. Shapira, & P. B. Kantor (Eds.), Recommender Systems Handbook (edisi ke-2, hlm. 191–226). Springer. https://doi.org/10.1007/978-1-4899-7637-6_6 
+Hoang, M., Bihorac, O. A., & Rouces, J. (2022). Aspect-based sentiment analysis using BERT. Dalam Proceedings of the 22nd Nordic Conference on Computational Linguistics (NoDaLiDa) (hlm. 187–196). Linköping University Electronic Press. 
+Kang, Y., Li, X., & Qian, T. (2023). A unified generative framework for aspect-based sentiment analysis. IEEE/ACM Transactions on Audio, Speech, and Language Processing, 
+31, 2174–2185. https://doi.org/10.1109/TASLP.2023.3278595 
+Li, J., Liu, W., Wu, X., & Zhang, D. (2021). Real-time sentiment analysis pipeline for largescale social media data using Apache Kafka and Spark Streaming. Journal of Big Data, 8(1), 
+1–22. https://doi.org/10.1186/s40537-021-00442-8 
+Nielsen, J. (1994). Usability engineering. Morgan Kaufmann Publishers. 
+Pontiki, M., Galanis, D., Papageorgiou, H., Androutsopoulos, I., Manandhar, S., Al-Smadi, M., Al-Ayyoub, M., Zhao, Y., Qin, B., De Clercq, O., Hoste, V., Apidianaki, M., Tannier, X., Loukachevitch, N., Kotelnikov, E., Bel, N., Jiménez-Zafra, S. M., & Eryigit, G. (2016). SemEval-2016 Task 5: Aspect based sentiment analysis. Dalam Proceedings of the 10th International Workshop on Semantic Evaluation (SemEval-2016) (hlm. 19–30). Association for Computational Linguistics. https://doi.org/10.18653/v1/S16-1002 
+Psallidas, F., Koutsoukos, X., Weimer, M., Interlandi, M., Karlas, A., Nakandala, S., Rekatsinas, T., Floratou, A., Curino, C., & Kraska, T. (2022). Data science through the looking glass: Analysis of millions of GitHub notebooks and scripts. Proceedings of the ACM on Management of Data (SIGMOD), 1(1), 1–26. https://doi.org/10.1145/3514221.3526140 
+Rahmadani, F., & Suyanto, Y. (2023). Aspect-based sentiment analysis on Indonesian restaurant reviews using IndoBERT. Journal of Information Technology and Computer Science (JITCOS), 8(2), 112–124. https://doi.org/10.25126/jitecs.20238276 
+Wilie, B., Vincentio, K., Winata, G. I., Cahyawijaya, S., Li, X., Lim, Z. Y., Soleman, S., Mahendra, R., Fung, P., Bahar, P., & Purwarianti, A. (2020). IndoNLU: Benchmark and resources for evaluating Indonesian natural language understanding. Dalam Proceedings of the 1st Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics and the 10th International Joint Conference on Natural Language Processing 
+(hlm. 	843–857). 	Association 	for 	Computational 	Linguistics. https://doi.org/10.18653/v1/2020.aacl-main.85 
+Wohlin, C., Runeson, P., Höst, M., Ohlsson, M. C., Regnell, B., & Wesslén, A. (2012). Experimentation in software engineering. Springer Science & Business Media. https://doi.org/10.1007/978-3-642-29044-2 
+Zhang, Y., Xu, J., Yang, P., & Luo, X. (2022). Mining implicit feedback for recommender systems by leveraging aspect-based sentiment analysis with neural networks. IEEE Transactions on Knowledge and Data Engineering, 34(2), 852–864. https://doi.org/10.1109/TKDE.2020.2977172 
+Zhao, W., Peng, H., Eger, S., Cambria, E., & Yang, M. (2021). Towards a better understanding of knowledge distillation for aspect-level sentiment classification. Dalam 
+Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP) (hlm. 4183–4193). Association for Computational Linguistics. https://doi.org/10.18653/v1/2021.emnlp-main.339 

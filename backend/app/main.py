@@ -2,8 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.routes import auth, tempat, rekomendasi, profil, admin
-from app.db.database import Base, engine
-from app.models import models  # pastikan models ter-import
+from app.db.database import Base, engine, SessionLocal
+from app.models import models
+from app.models.models import User
+from app.core.security import hash_password
 
 # Buat semua tabel (jika belum ada)
 Base.metadata.create_all(bind=engine)
@@ -15,6 +17,53 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+@app.on_event("startup")
+def startup_tasks():
+    """Tugas yang dijalankan saat backend mulai/reload."""
+    print("[DB] Menjalankan migrasi manual untuk 'jenis_kelamin'...")
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            # Pastikan kolom jenis_kelamin ada
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS jenis_kelamin VARCHAR(20)"))
+            conn.commit()
+            print("[DB] Migrasi 'jenis_kelamin' OK.")
+    except Exception as e:
+        print(f"[DB] Gagal migrasi: {e}")
+
+    print("[AUTH] Mengecek ketersediaan akun admin...")
+    db = SessionLocal()
+    try:
+        email = "mahardhikayoanda07@gmail.com"
+        user = db.query(User).filter(User.email == email).first()
+        
+        # Selalu reset/set password ke admin123 untuk akun ini selama fase debugging
+        hashed_pw = hash_password("admin123")
+        
+        if not user:
+            print(f">>> [ADMIN SETUP] Membuat admin baru: {email}")
+            user = User(
+                nama="Mahardhika Yoanda",
+                email=email,
+                password=hashed_pw,
+                role="admin"
+            )
+            db.add(user)
+            db.commit()
+            print(f">>> [ADMIN SETUP] Sukses membuat admin.")
+        else:
+            print(f">>> [ADMIN SETUP] Resetting password admin untuk: {email}")
+            user.role = "admin"
+            user.password = hashed_pw
+            db.commit()
+            print(f">>> [ADMIN SETUP] Password admin berhasil di-reset ke 'admin123'.")
+            
+        print("[AUTH] Akun admin siap: mahardhikayoanda07@gmail.com / admin123")
+    except Exception as e:
+        print(f"[AUTH] ERROR saat inisialisasi admin: {e}")
+    finally:
+        db.close()
 
 # CORS untuk Flutter app
 app.add_middleware(
@@ -29,6 +78,8 @@ app.add_middleware(
 app.include_router(auth.router,         prefix="/api/v1")
 app.include_router(tempat.router,       prefix="/api/v1")
 app.include_router(rekomendasi.router,  prefix="/api/v1")
+app.include_router(profil.router,       prefix="/api/v1")
+app.include_router(admin.router,        prefix="/api/v1")
 
 @app.get("/")
 def root():

@@ -166,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const Text('Belum punya akun? '),
                       TextButton(
-                        onPressed: () => context.go('/register'),
+                        onPressed: () => context.push('/register'),
                         child: const Text(
                           'Daftar Akun',
                           style: TextStyle(

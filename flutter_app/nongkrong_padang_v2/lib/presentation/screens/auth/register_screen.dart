@@ -180,7 +180,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       const Text('Sudah punya akun? '),
                       TextButton(
-                        onPressed: () => context.go('/login'),
+                        onPressed: () => context.pop(),
                         child: const Text(
                           'Masuk',
                           style: TextStyle(
@@ -195,6 +195,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
         ),
       ),
     );

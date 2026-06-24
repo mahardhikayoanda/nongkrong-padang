@@ -1,4 +1,7 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../data/models/tempat_model.dart';
@@ -34,6 +37,38 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
+  Future<void> _launchMaps() async {
+    final t = _tempat;
+    if (t == null) return;
+
+    // 1. Skema geo (Android Native)
+    final geoUrl =
+        'geo:${t.latitude},${t.longitude}?q=${t.latitude},${t.longitude}(${Uri.encodeComponent(t.namaTempat)})';
+    // 2. Skema https (Universal fallback)
+    final httpsUrl =
+        'https://www.google.com/maps/search/?api=1&query=${t.latitude},${t.longitude}';
+
+    try {
+      if (await canLaunchUrlString(geoUrl)) {
+        await launchUrlString(geoUrl, mode: LaunchMode.externalApplication);
+      } else if (await canLaunchUrlString(httpsUrl)) {
+        await launchUrlString(httpsUrl, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Tidak ada aplikasi peta yang mendukung')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error launch maps: $e');
+      // Final attempt with just the https URL directly if canLaunch fails
+      await launchUrlString(httpsUrl,
+          mode: LaunchMode.externalNonBrowserApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,20 +91,24 @@ class _DetailScreenState extends State<DetailScreen> {
           expandedHeight: 250,
           pinned: true,
           backgroundColor: AppColors.primary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => context.pop(),
+          ),
           flexibleSpace: FlexibleSpaceBar(
-            title: Text(t.namaTempat,
-                style: const TextStyle(fontSize: 14)),
+            title: Text(t.namaTempat, style: const TextStyle(fontSize: 14)),
             background: t.fotoUrl != null
-                ? Image.network(t.fotoUrl!, fit: BoxFit.cover,
+                ? Image.network(t.fotoUrl!,
+                    fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.primary.withOpacity(0.3),
-                      child: const Icon(Icons.coffee,
-                          size: 64, color: Colors.white),
-                    ))
+                          color: AppColors.primary.withOpacity(0.3),
+                          child: const Icon(Icons.coffee,
+                              size: 64, color: Colors.white),
+                        ))
                 : Container(
                     color: AppColors.primary.withOpacity(0.3),
-                    child: const Icon(Icons.coffee,
-                        size: 64, color: Colors.white),
+                    child:
+                        const Icon(Icons.coffee, size: 64, color: Colors.white),
                   ),
           ),
         ),
@@ -111,27 +150,43 @@ class _DetailScreenState extends State<DetailScreen> {
                 const SizedBox(height: 24),
 
                 // Profil Sentimen
-                const Text('Profil Sentimen',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text('Profil Sentimen (Radar)',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(
-                  'Berdasarkan analisis ${t.totalUlasan} ulasan menggunakan IndoBERT ABSA.',
+                  'Visualisasi 5 aspek sentimen menggunakan IndoBERT ABSA.',
                   style: const TextStyle(
                       color: AppColors.textSecondary, fontSize: 12),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-                // Radar Chart sederhana (bar chart per aspek)
+                // RADAR CHART
+                if (s != null) _buildRadarChart(s),
+                const SizedBox(height: 32),
+
+                const Text('Detail Skor Aspek',
+                    style:
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
                 if (s != null) _buildSentimenBars(s),
                 const SizedBox(height: 24),
 
                 // Tombol Google Maps
-                ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.directions),
-                  label: const Text('Arahkan dengan Google Maps'),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _launchMaps,
+                    icon: const Icon(Icons.directions),
+                    label: const Text('Petunjuk Jalan (Google Maps)'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -140,11 +195,60 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
+  Widget _buildRadarChart(SentimenAspek s) {
+    return AspectRatio(
+      aspectRatio: 1.3,
+      child: RadarChart(
+        RadarChartData(
+          radarShape: RadarShape.polygon,
+          dataSets: [
+            RadarDataSet(
+              fillColor: AppColors.primary.withOpacity(0.2),
+              borderColor: AppColors.primary,
+              entryRadius: 3,
+              dataEntries: [
+                RadarEntry(value: s.suasanaPos),
+                RadarEntry(value: s.hargaPos),
+                RadarEntry(value: s.lokasiPos),
+                RadarEntry(value: s.pelayananPos),
+                RadarEntry(value: s.fasilitasPos),
+              ],
+            ),
+          ],
+          radarBackgroundColor: Colors.transparent,
+          borderData: FlBorderData(show: false),
+          radarBorderData: const BorderSide(color: Colors.grey, width: 0.5),
+          titlePositionPercentageOffset: 0.2,
+          titleTextStyle: const TextStyle(color: Colors.black, fontSize: 10),
+          getTitle: (index, angle) {
+            switch (index) {
+              case 0:
+                return const RadarChartTitle(text: 'Suasana');
+              case 1:
+                return const RadarChartTitle(text: 'Harga');
+              case 2:
+                return const RadarChartTitle(text: 'Lokasi');
+              case 3:
+                return const RadarChartTitle(text: 'Pelayanan');
+              case 4:
+                return const RadarChartTitle(text: 'Fasilitas');
+              default:
+                return const RadarChartTitle(text: '');
+            }
+          },
+          tickCount: 5,
+          ticksTextStyle: const TextStyle(color: Colors.grey, fontSize: 8),
+          gridBorderData: const BorderSide(color: Colors.grey, width: 0.5),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSentimenBars(SentimenAspek s) {
     final aspek = [
-      {'label': 'Suasana',   'pos': s.suasanaPos,   'neg': s.suasanaNeg},
-      {'label': 'Harga',     'pos': s.hargaPos,     'neg': s.hargaNeg},
-      {'label': 'Lokasi',    'pos': s.lokasiPos,    'neg': s.lokasiNeg},
+      {'label': 'Suasana', 'pos': s.suasanaPos, 'neg': s.suasanaNeg},
+      {'label': 'Harga', 'pos': s.hargaPos, 'neg': s.hargaNeg},
+      {'label': 'Lokasi', 'pos': s.lokasiPos, 'neg': s.lokasiNeg},
       {'label': 'Pelayanan', 'pos': s.pelayananPos, 'neg': s.pelayananNeg},
       {'label': 'Fasilitas', 'pos': s.fasilitasPos, 'neg': s.fasilitasNeg},
     ];
