@@ -10,6 +10,13 @@ import json
 
 router = APIRouter(prefix="/rekomendasi", tags=["Rekomendasi"])
 
+# Tambahkan ini di app/api/routes/rekomendasi.py
+@router.get("/sentimen/{id_tempat}")
+def get_sentimen(id_tempat: str, db: Session = Depends(get_db)):
+    # Query data dari aspek_sentimen sesuai ID tempat
+    # ...
+    return {"data": "..."}
+    
 @router.post("/", response_model=RekomendasiResponse)
 def get_rekomendasi(
     konteks: KonteksRequest,

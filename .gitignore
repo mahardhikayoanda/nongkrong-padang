@@ -12,3 +12,4 @@ __pycache__/
 
 # File OS / Lainnya
 .DS_Store
+pipeline/.env

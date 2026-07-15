@@ -1,61 +1,57 @@
 import os
+import sys
+
+# Perbaikan path agar folder 'ml_model' dikenali sebagai paket
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+root_dir = os.path.dirname(parent_dir)
+sys.path.append(root_dir)
+
 import torch
 from transformers import (AutoModelForSequenceClassification,
-                           AutoModelForTokenClassification,
-                           AutoTokenizer)
+                          AutoModelForTokenClassification,
+                          AutoTokenizer)
+# Sekarang impor dari src akan berhasil karena root_dir sudah di-append
 from src.dataset import (POLARITAS_MAP, ID_TO_POLARITAS,
-                          BIO_MAP, ID_TO_BIO, term_ke_kategori)
+                         BIO_MAP, ID_TO_BIO, term_ke_kategori)
 from dotenv import load_dotenv
 
 load_dotenv()
 
-MODEL_ATE_PATH = os.getenv("MODEL_ATE_PATH", "./models/ate")
-MODEL_ASC_PATH = os.getenv("MODEL_ASC_PATH", "./models/asc")
-INDOBERT_BASE  = os.getenv("INDOBERT_BASE", "indobenchmark/indobert-base-p1")
+# Gunakan jalur absolut agar lebih aman
+BASE_DIR = root_dir
+MODEL_ATE_PATH = os.getenv("MODEL_ATE_PATH", os.path.join(BASE_DIR, "models", "ate"))
+MODEL_ASC_PATH = os.getenv("MODEL_ASC_PATH", os.path.join(BASE_DIR, "models", "asc"))
+INDOBERT_BASE  = "indobenchmark/indobert-base-p1"
 
 class ABSAPipeline:
-    """
-    Pipeline inferensi ABSA dua tahap:
-    1. ATE  → Ekstrak term aspek dari teks
-    2. ASC  → Klasifikasi polaritas tiap term aspek
-    """
-    
     def __init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"[ABSA] Menggunakan device: {self.device}")
         self._load_models()
     
     def _load_models(self):
-        """Load model ATE dan ASC. Gunakan IndoBERT base jika fine-tuned belum ada."""
-        
         # ── ATE Model ──────────────────────────────────────
-        ate_path = MODEL_ATE_PATH if os.path.exists(
-            os.path.join(MODEL_ATE_PATH, "config.json")
-        ) else INDOBERT_BASE
-        
+        ate_path = MODEL_ATE_PATH if os.path.exists(MODEL_ATE_PATH) else INDOBERT_BASE
         print(f"[ABSA] Loading ATE dari: {ate_path}")
         self.ate_tokenizer = AutoTokenizer.from_pretrained(ate_path)
         self.ate_model = AutoModelForTokenClassification.from_pretrained(
-            ate_path,
-            num_labels=3,
-            ignore_mismatched_sizes=True
+            ate_path, num_labels=3, ignore_mismatched_sizes=True
         ).to(self.device)
         self.ate_model.eval()
         
         # ── ASC Model ──────────────────────────────────────
-        asc_path = MODEL_ASC_PATH if os.path.exists(
-            os.path.join(MODEL_ASC_PATH, "config.json")
-        ) else INDOBERT_BASE
-        
+        asc_path = MODEL_ASC_PATH if os.path.exists(MODEL_ASC_PATH) else INDOBERT_BASE
         print(f"[ABSA] Loading ASC dari: {asc_path}")
         self.asc_tokenizer = AutoTokenizer.from_pretrained(asc_path)
         self.asc_model = AutoModelForSequenceClassification.from_pretrained(
-            asc_path,
-            num_labels=3,
-            ignore_mismatched_sizes=True
+            asc_path, num_labels=3, ignore_mismatched_sizes=True
         ).to(self.device)
         self.asc_model.eval()
         
-        print("[ABSA] ✅ Semua model berhasil dimuat")
+        print("[ABSA] ✅ Model siap digunakan")
+    
+    # ... (tambahkan method lainnya: ekstrak_term_aspek, klasifikasi_sentimen, analisis, _keyword_fallback seperti kode Anda sebelumnya)
     
     def ekstrak_term_aspek(self, teks: str) -> list[str]:
         """
@@ -176,3 +172,14 @@ class ABSAPipeline:
                     break
         
         return found[:5]  # max 5 aspek per ulasan
+
+if __name__ == "__main__":
+    # Inisialisasi pipeline
+    pipeline = ABSAPipeline()
+    
+    # Uji coba analisis
+    teks = "Tempatnya nyaman, tapi kopinya mahal sekali."
+    hasil = pipeline.analisis(teks)
+    
+    # Cetak hasil
+    print(f"[HASIL ANALISIS]: {hasil}")

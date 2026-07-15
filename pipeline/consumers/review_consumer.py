@@ -32,11 +32,12 @@ def proses_pesan(pesan: dict) -> dict | None:
     return pesan
 
 def jalankan_consumer():
-    """
-    Consumer utama: baca dari Kafka → preprocessing → simpan ke PostgreSQL.
-    Akan terus berjalan sampai di-stop manual.
-    """
     print(f"[CONSUMER] Mendengarkan topic '{KAFKA_TOPIC}'...")
+    
+    # Inisialisasi variabel di luar loop
+    total_diproses = 0
+    total_disimpan = 0
+    total_skip = 0
     
     consumer = KafkaConsumer(
         KAFKA_TOPIC,
@@ -44,51 +45,40 @@ def jalankan_consumer():
         group_id=KAFKA_GROUP,
         auto_offset_reset="earliest",
         enable_auto_commit=True,
-        value_deserializer=lambda m: json.loads(m.decode("utf-8")),
-        consumer_timeout_ms=30000  # stop otomatis jika 30 detik tidak ada pesan
+        value_deserializer=lambda m: json.loads(m.decode("utf-8"))
     )
     
-    total_diproses = 0
-    total_disimpan = 0
-    total_skip     = 0
+    print("[CONSUMER] Menunggu pesan masuk...")
     
-    for msg in consumer:
-        pesan = msg.value
-        print(f"[CONSUME] Ulasan dari tempat: {pesan.get('id_tempat', '?')[:8]}...")
-        
-        # Preprocessing
-        pesan_bersih = proses_pesan(pesan)
-        
-        if pesan_bersih is None:
-            total_skip += 1
+    # Gunakan try-except untuk mencegah skrip mati total jika ada error
+    try:
+        for msg in consumer:
+            pesan = msg.value
+            print(f"[DEBUG] Menerima pesan: {pesan.get('teks_ulasan', '')[:30]}")
+            
+            # Preprocessing
+            pesan_bersih = proses_pesan(pesan)
+            
+            if pesan_bersih is None:
+                total_skip += 1
+                total_diproses += 1
+                continue
+            
+            # Simpan ke PostgreSQL
+            id_ulasan = simpan_ulasan(pesan_bersih)
+            
+            if id_ulasan:
+                print(f"[SAVED] Ulasan tersimpan: {id_ulasan[:8]}...")
+                total_disimpan += 1
+            else:
+                print(f"[SKIP] Duplikasi atau error, ulasan tidak disimpan")
+                total_skip += 1
+            
             total_diproses += 1
-            continue
-        
-        # Simpan ke PostgreSQL
-        id_ulasan = simpan_ulasan(pesan_bersih)
-        
-        if id_ulasan:
-            print(f"[SAVED] Ulasan tersimpan: {id_ulasan[:8]}...")
-            total_disimpan += 1
-        else:
-            print(f"[SKIP] Duplikasi atau error, ulasan tidak disimpan")
-        
-        total_diproses += 1
-    
-    consumer.close()
-    
-    print(f"""
-[CONSUMER] Selesai.
-  - Total diproses : {total_diproses}
-  - Tersimpan      : {total_disimpan}
-  - Diskip         : {total_skip}
-    """)
-    
-    return {
-        "diproses": total_diproses,
-        "disimpan": total_disimpan,
-        "skip": total_skip
-    }
-
-if __name__ == "__main__":
-    jalankan_consumer()
+            
+    except Exception as e:
+        print(f"[ERROR] Terjadi kesalahan: {e}")
+    finally:
+        consumer.close()
+        print(f"\n[CONSUMER] Selesai.\n - Total diproses: {total_diproses}\n - Tersimpan: {total_disimpan}\n - Diskip: {total_skip}")
+        return {"diproses": total_diproses, "disimpan": total_disimpan, "skip": total_skip}

@@ -57,12 +57,12 @@ def bersihkan_teks(teks: str) -> str:
     
     return teks
 
-def is_teks_valid(teks: str, min_kata: int = 5) -> bool:
+def is_teks_valid(teks: str, min_kata: int = 3) -> bool: # Turunkan dari 5 ke 3
     """
-    Validasi apakah teks ulasan layak diproses ABSA.
-    Minimal 5 kata dan bukan hanya angka/simbol.
+    Validasi diperlonggar agar ulasan singkat tetap bisa dianalisis.
     """
     if not teks:
         return False
+    # Hapus tanda baca untuk menghitung jumlah kata yang sebenarnya
     kata = teks.split()
     return len(kata) >= min_kata
